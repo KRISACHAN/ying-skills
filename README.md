@@ -1,8 +1,12 @@
+**English** | [简体中文](./README.zh-CN.md)
+
 # ying-skills
 
-通用 AI Coding Skill Groups 与迁移工具。
+Reusable AI coding skill groups and migration tooling for real software projects.
 
-## 目录
+The repository keeps each skill group in a tool-neutral source format, then generates and merges the corresponding project-level skill layout for supported AI coding tools.
+
+## Repository Layout
 
 ```text
 ying-skills/
@@ -12,56 +16,80 @@ ying-skills/
 └── skills-group/
     └── code-engineering/
         ├── README.md
+        ├── README.zh-CN.md
         ├── references/
         └── skills/
 ```
 
-`skills-group/` 是 Skill Group 源码目录；每个子目录是一组可独立维护和迁移的 Skills。`scripts/` 负责把统一源码生成成不同 AI 工具支持的项目目录格式，并合并迁移到已有项目。
+- `skills-group/` is the source-of-truth directory for reusable Skill Groups.
+- `scripts/` generates tool-specific layouts and merges them into existing projects.
+- Generated output is not committed. Source skills and shared references remain tool-neutral.
 
-## 使用
-
-安装依赖（当前没有第三方运行时依赖，但使用 pnpm 作为项目入口）：
+## Quick Start
 
 ```bash
 pnpm install
 ```
 
-生成全部 Skill Group 的全部 AI 工具格式：
+Generate all Skill Groups for all supported tools:
 
 ```bash
 pnpm generate
 ```
 
-只生成指定 Group / 工具：
+Generate a specific group/tool combination:
 
 ```bash
 pnpm generate -- --group code-engineering --tool codex
 pnpm generate -- --group code-engineering --tool claude --tool gemini
 ```
 
-交互式迁移到项目：
+Interactively migrate skills into an existing project:
 
 ```bash
 pnpm migrate
 ```
 
-执行后输入目标项目路径，再选择 Skill Group 与 AI 工具。迁移采用合并模式：保留目标项目其他文件；若目标路径已有同名 Skill/Reference，会先提示再覆盖这些冲突文件。
+The migration flow asks for:
 
-也支持非交互调用：
-
-```bash
-pnpm migrate -- --path ../ying-knowledge --group code-engineering --tool codex
+```text
+Project path
+  ↓
+Skill Group
+  ↓
+AI tool(s)
+  ↓
+Generate
+  ↓
+Collision check
+  ↓
+Merge
 ```
 
-多个工具：
+Existing unrelated project files are preserved. If a generated Skill or Reference already exists at the target path, the migration command reports the collision before replacing the conflicting files.
+
+Non-interactive migration is also supported:
 
 ```bash
-pnpm migrate -- --path ../my-project --group code-engineering --tool codex --tool claude
+pnpm migrate -- \
+  --path ../ying-knowledge \
+  --group code-engineering \
+  --tool codex
 ```
 
-## 当前支持的 AI 工具格式
+Multiple tools can be migrated in one run:
 
-| 工具 | 项目级 Skills 目录 |
+```bash
+pnpm migrate -- \
+  --path ../my-project \
+  --group code-engineering \
+  --tool codex \
+  --tool claude
+```
+
+## Supported AI Tool Layouts
+
+| Tool | Project-level Skills directory |
 | --- | --- |
 | OpenAI Codex | `.agents/skills/` |
 | Cursor | `.cursor/skills/` |
@@ -70,8 +98,32 @@ pnpm migrate -- --path ../my-project --group code-engineering --tool codex --too
 | Kiro | `.kiro/skills/` |
 | GitHub Copilot | `.github/skills/` |
 
-各 Group 的 `.generated/` 是脚本产物，不提交 Git；真正的 Source of Truth 始终是 `skills-group/<group>/skills/` 与 `references/`。
+Generated artifacts are written under:
+
+```text
+skills-group/<group>/.generated/
+```
+
+Each generated Skill is self-contained. Shared group references are bundled into that Skill under `references/_shared/`, while the source repository still maintains only one copy of the shared engineering guidance.
 
 ## Skill Groups
 
-- [`code-engineering`](./skills-group/code-engineering/) — 面向真实代码项目的工程治理、架构分析、方案设计、行为保持式重构、结构化文档与独立 Review。
+### [Code Engineering](./skills-group/code-engineering/)
+
+A general-purpose engineering workflow for AI-assisted software development and brownfield refactoring.
+
+Core flow:
+
+```text
+Guardrails
+  ↓
+Architecture Analysis
+  ↓
+Solution / Refactor Planning
+  ↓
+Implementation + Verification
+```
+
+An independent Review subsystem can be applied to refactoring, features, bug fixes, architecture proposals, and ordinary implementation work.
+
+The default engineering baseline emphasizes Refactoring, Clean Code, module-first and layered architecture, Ports & Adapters, Strategy/Plugin where justified, structured documentation for humans and AI, and evidence-based verification.

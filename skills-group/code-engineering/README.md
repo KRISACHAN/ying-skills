@@ -1,16 +1,42 @@
+**English** | [简体中文](./README.zh-CN.md)
+
 # Code Engineering Skill Group
 
-面向真实代码项目的通用 AI Coding Skill Group。
+A reusable AI coding Skill Group for real software projects.
 
-核心流程：**建立规范 → 项目分析 → 方案制定 → 实施与验证**。Review 是独立横向质量系统，可同时用于重构、Feature、Bugfix、架构设计和普通需求开发。
+The goal is not to force every repository into one architecture. The goal is to help AI work inside explicit engineering boundaries through a repeatable lifecycle:
 
-## 源码结构
+```text
+Establish Guardrails
+  ↓
+Analyze the Project
+  ↓
+Design the Solution / Refactor Plan
+  ↓
+Implement + Verify
+```
+
+Review is an independent cross-cutting quality system that can be used for refactoring, features, bug fixes, architecture proposals, migrations, and ordinary development work.
+
+## Source Layout
 
 ```text
 skills-group/code-engineering/
 ├── README.md
-├── references/                 # 全组共享工程原则
-└── skills/                     # Agent Skill 源码
+├── README.zh-CN.md
+├── references/
+│   ├── engineering-principles.md
+│   ├── refactoring.md
+│   ├── clean-code.md
+│   ├── module-first-architecture.md
+│   ├── layered-architecture.md
+│   ├── ports-and-adapters.md
+│   ├── strategy-and-plugin.md
+│   ├── comments-and-documentation.md
+│   ├── verification.md
+│   ├── review-system.md
+│   └── artifact-protocol.md
+└── skills/
     ├── project-guardrails/
     ├── architecture-audit/
     ├── refactor-plan/
@@ -21,44 +47,53 @@ skills-group/code-engineering/
     └── review-followup/
 ```
 
-`.generated/` 由根目录 `scripts/generate-skills.mjs` 自动产生并被 Git 忽略，不是源码。
+`skills/` and `references/` are the source of truth. Tool-specific output is generated into `.generated/` and should not be edited manually.
 
-## 核心工程观
+## Engineering Baseline
 
-所有 Skill 共享以下默认基线：
+All Skills share the same default engineering philosophy:
 
-- **Refactoring**：行为保持、小步修改、持续验证；
-- **Clean Code**：清晰命名、单一职责、高内聚低耦合、显式副作用、减少重复知识；
-- **Module-first**：优先按业务/能力模块组织，再在模块内部合理分层；
-- **Layered Architecture**：明确 Domain / Application / Ports / Infrastructure / Interface / Composition 的职责与依赖方向；
-- **Ports & Adapters**：数据库、LLM、搜索、文件系统、第三方 SDK 等技术细节停留在边界；
-- **Strategy**：只用于真实存在的算法变化；
-- **Plugin**：只用于可独立增加、移除、组合的扩展能力；
-- **Structured Documentation**：README、AGENTS、ADR、索引与 Why / Invariant / Boundary / Tradeoff 注释共同服务人和 AI；
-- **Evidence-based Verification**：没有新鲜验证证据，不宣称完成；
-- **Anti-overengineering**：不为了“架构感”制造接口、Factory、Strategy、Plugin 或碎片化小文件。
+- **Refactoring** — behavior-preserving, incremental changes with continuous verification.
+- **Clean Code** — clear naming, focused responsibilities, high cohesion, low coupling, explicit side effects, and reduced duplication of knowledge.
+- **Module-first architecture** — organize by business/capability boundaries first, then layer inside modules where useful.
+- **Layered architecture** — keep Domain, Application, Ports, Infrastructure, Interface, and Composition responsibilities explicit when the project benefits from those boundaries.
+- **Ports & Adapters** — keep databases, LLMs, search engines, filesystems, SDKs, and other external mechanisms at replaceable boundaries.
+- **Strategy** — use when one responsibility has real interchangeable algorithms.
+- **Plugin** — use for independently addable/removable/composable extension capabilities.
+- **Structured documentation** — README, AGENTS/instructions, ADRs, indexes, and Why/Invariant/Boundary/Tradeoff comments should serve both humans and AI.
+- **Evidence-based verification** — do not claim completion without fresh evidence appropriate to the risk.
+- **Anti-overengineering** — patterns must solve real variation, ownership, or integration problems; do not create abstraction for appearance.
 
-优先级始终是：**用户明确要求 > 项目明确合同/规范 > 项目既有合理架构 > 本 Skill Group 默认原则**。
-
-## Skill 一览
-
-| 阶段 | Skill | 作用 | 默认权限 |
-| --- | --- | --- | --- |
-| 1. 建立规范 | `$project-guardrails` | 建立/审计项目 AI 开发规范、架构边界、验证和文档导航 | 可改工程规范，不改业务行为 |
-| 2. 项目分析 | `$architecture-audit <scope>` | 功能图谱、架构图谱、依赖/数据流、Hotspot、坏味道与根因诊断 | 只读代码，可写审计 artifact |
-| 3. 方案制定 | `$refactor-plan <scope-or-audit>` | 目标结构、Refactor Units、行为合同、风险、回归方案 | 不改业务代码 |
-| 4. 实施与验证 | `$refactor <approved-unit>` | 按批准 Unit 小步修改、持续验证、最终收敛检查 | 可改代码 |
-| 支撑 | `$code-documentation <scope>` | 同步结构化注释、README、ADR、文档索引 | 只改文档/注释，不改行为 |
-| Review | `$solution-review <artifact>` | 审 PRD/Spec/Feature/Bugfix/架构/重构方案 | 只审查 |
-| Review | `$code-review <scope>` | 审实际代码实现、架构、Clean Code、验证缺口和文档漂移 | 只审查 |
-| Review | `$review-followup <report>` | 验证 Finding 后最小修复或有证据地驳回 | 可改方案或代码 |
-
-## 推荐调用顺序
-
-### 重构
+Precedence:
 
 ```text
-$project-guardrails                    # 第一次接入项目或规范明显过时时
+Explicit user instruction
+  > explicit project contracts / rules
+  > coherent existing project architecture
+  > Code Engineering defaults
+```
+
+## Skills
+
+| Stage | Skill | Purpose | Default permission |
+| --- | --- | --- | --- |
+| 1. Guardrails | `$project-guardrails` | Establish or audit AI engineering rules, architecture boundaries, verification requirements, and documentation navigation | May update engineering rules/config/docs; no business-behavior refactor |
+| 2. Analysis | `$architecture-audit <scope>` | Build functional/architecture maps, dependency/data-flow maps, hotspots, code smells, verification gaps, and root-cause findings | Read-only code; may write audit artifacts |
+| 3. Planning | `$refactor-plan <scope-or-audit>` | Turn approved findings into target structure, Refactor Units, preserved contracts, risks, and regression plans | No production implementation |
+| 4. Implementation | `$refactor <approved-unit>` | Execute one approved Refactor Unit in small behavior-preserving steps with continuous verification | May change code within approved scope |
+| Support | `$code-documentation <scope>` | Synchronize structured comments, README, ADRs, and navigation after structural changes | Documentation/comments only; no runtime behavior change |
+| Review | `$solution-review <artifact>` | Review PRDs, specs, feature/bugfix plans, architecture proposals, migrations, or refactor plans before implementation | Review only |
+| Review | `$code-review <scope>` | Review actual implementation for correctness, solution compliance, Clean Code, architecture, patterns, verification gaps, and documentation drift | Review only |
+| Review | `$review-followup <report>` | Validate each finding, then minimally fix valid issues or reject invalid ones with evidence | May change solution artifacts or code as required |
+
+`0 findings` is a valid review result. Review Skills must not manufacture issues to satisfy a quota.
+
+## Recommended Flow
+
+### Refactoring
+
+```text
+$project-guardrails                    # first adoption or stale project rules
         ↓ Human Review
 $architecture-audit <pkg/app/module>
         ↓ Human Review
@@ -68,15 +103,15 @@ $solution-review <refactor-plan>
         ↓ Human Review
 $refactor <approved RF unit>
         ↓
-$code-documentation <scope>            # 按需
+$code-documentation <scope>            # when structure/docs changed
         ↓
 $code-review <implementation scope>
         ↓
-PASS → Next Unit
+PASS → next Refactor Unit
 FAIL → $review-followup <report> → $code-review
 ```
 
-### 普通需求 / Feature
+### Feature / Requirement Work
 
 ```text
 PRD / Spec / Technical Plan
@@ -90,27 +125,67 @@ $code-review <scope>
 PASS / $review-followup
 ```
 
-### Bugfix
+### Bug Fix
 
 ```text
 Bug Analysis / Fix Plan
         ↓
-$solution-review <artifact>             # 简单低风险问题可跳过
+$solution-review <artifact>     # optional for simple low-risk fixes
         ↓
 Implementation
         ↓
 $code-review <scope>
 ```
 
-## 生成不同 AI 工具格式
+## Human Gates
 
-在仓库根目录：
+This Skill Group intentionally does **not** provide a one-command orchestrator that automatically runs the entire lifecycle.
+
+For high-impact work, the intended control model is:
+
+```text
+AI executes one stage
+  ↓
+Persisted artifact / evidence
+  ↓
+Human review
+  ↓
+Explicitly invoke the next stage
+```
+
+This keeps the human in control of problem interpretation, architecture direction, solution approval, and implementation acceptance.
+
+## Artifact Protocol
+
+Existing project conventions always win. If the repository already has Requirements, Specs, ADRs, review archives, or technical-design directories, use them.
+
+If no convention exists, the fallback is:
+
+```text
+.engineering/
+├── audits/
+├── plans/
+└── reviews/
+```
+
+See [`references/artifact-protocol.md`](./references/artifact-protocol.md) for the fallback contract.
+
+## Generate Tool-specific Formats
+
+From the repository root:
 
 ```bash
 pnpm generate -- --group code-engineering
 ```
 
-生成结果位于：
+Generate one or more tools:
+
+```bash
+pnpm generate -- --group code-engineering --tool codex
+pnpm generate -- --group code-engineering --tool claude --tool gemini
+```
+
+Generated output:
 
 ```text
 skills-group/code-engineering/.generated/
@@ -122,7 +197,7 @@ skills-group/code-engineering/.generated/
 └── copilot/.github/skills/<skill>/...
 ```
 
-源码中的共享 `references/` 不直接作为外部目录依赖。生成时，每个 Skill 都会得到一份自包含的：
+Each generated Skill is self-contained:
 
 ```text
 <skill>/
@@ -131,24 +206,34 @@ skills-group/code-engineering/.generated/
     └── _shared/
 ```
 
-生成器会把源码中的 `../../references/...` 自动改写为 `./references/_shared/...`。这样生成后的 Skill 符合“Skill 目录自包含”的跨 Agent 使用方式，同时源码仍只维护一份共享工程原则。
+The generator copies the shared group references into each generated Skill and rewrites source references such as `../../references/...` to `./references/_shared/...`.
 
-## 迁移到现有项目
+## Migrate into a Project
 
-推荐直接从仓库根目录执行：
+Interactive migration:
 
 ```bash
 pnpm migrate
 ```
 
-迁移器会：
+Non-interactive Codex example:
 
-1. 询问目标项目路径；
-2. 选择 Skill Group；
-3. 选择一个或多个 AI 工具格式；
-4. 自动生成对应格式；
-5. 检查目标项目同名文件冲突；
-6. 合并到目标项目，保留无关文件；
-7. 提醒你检查目标项目的 `git status` / `git diff`。
+```bash
+pnpm migrate -- \
+  --path ../ying-knowledge \
+  --group code-engineering \
+  --tool codex
+```
 
-本 Skill Group 不提供一键自动执行整个工程生命周期的总控 Skill；高影响阶段应保留人工 Review Gate。
+Migration is merge-based: unrelated files already present in the target AI-tool directory are preserved. Conflicting generated Skill/Reference files are reported before replacement unless non-interactive confirmation is explicitly supplied.
+
+## Supported Tool Layouts
+
+| Tool | Generated project directory |
+| --- | --- |
+| OpenAI Codex | `.agents/skills/` |
+| Cursor | `.cursor/skills/` |
+| Gemini CLI | `.gemini/skills/` |
+| Claude Code | `.claude/skills/` |
+| Kiro | `.kiro/skills/` |
+| GitHub Copilot | `.github/skills/` |
