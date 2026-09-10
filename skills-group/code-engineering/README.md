@@ -1,70 +1,27 @@
 # Code Engineering Skill Group
 
-可直接复制到真实代码项目中使用的一组通用 AI Coding Skills。
+面向真实代码项目的通用 AI Coding Skill Group。
 
 核心流程：**建立规范 → 项目分析 → 方案制定 → 实施与验证**。Review 是独立横向质量系统，可同时用于重构、Feature、Bugfix、架构设计和普通需求开发。
 
-## 直接安装到项目
-
-### Codex（主支持）
-
-把本目录下的 `.agents/` 合并复制到目标项目根目录：
-
-```bash
-mkdir -p /path/to/project/.agents
-cp -R code-engineering/.agents/. /path/to/project/.agents/
-```
-
-如果你已经位于目标项目根目录，例如 `ying-skills` 与项目是相邻目录：
-
-```bash
-mkdir -p .agents
-cp -R ../ying-skills/code-engineering/.agents/. .agents/
-```
-
-复制完成后，项目应出现：
+## 源码结构
 
 ```text
-<project>/
-└── .agents/
-    ├── references/
-    ├── tools/
-    └── skills/
-        ├── project-guardrails/
-        ├── architecture-audit/
-        ├── refactor-plan/
-        ├── refactor/
-        ├── code-documentation/
-        ├── solution-review/
-        ├── code-review/
-        └── review-followup/
+skills-group/code-engineering/
+├── README.md
+├── references/                 # 全组共享工程原则
+└── skills/                     # Agent Skill 源码
+    ├── project-guardrails/
+    ├── architecture-audit/
+    ├── refactor-plan/
+    ├── refactor/
+    ├── code-documentation/
+    ├── solution-review/
+    ├── code-review/
+    └── review-followup/
 ```
 
-Codex 项目级 Skills 使用 `.agents/skills/<skill-name>/SKILL.md`。安装后重启/刷新 Agent 会话，再显式调用 `$skill-name` 即可。
-
-## 兼容性
-
-`.agents/skills/` 是本组唯一真源，不维护多份 Skill 正文。
-
-| Agent / 工具 | `.agents/skills` | 使用方式 |
-| --- | --- | --- |
-| OpenAI Codex | ✅ 主支持 | `$project-guardrails`、`$architecture-audit` 等 |
-| Cursor | ✅ 原生发现 | Agent 自动选择或 `/` 选择 Skill |
-| Gemini CLI | ✅ Workspace alias | 自动激活或通过 `/skills` 管理 |
-| GitHub Copilot / VS Code | ✅ 原生发现 | Agent/Chat 中选择或触发 Skill |
-| Claude Code | ⚠️ 官方路径为 `.claude/skills` | 使用兼容同步脚本 |
-| Kiro | ⚠️ 官方路径为 `.kiro/skills` | 使用兼容同步脚本 |
-
-Claude / Kiro 兼容同步：
-
-```bash
-bash .agents/tools/sync-code-engineering.sh claude
-bash .agents/tools/sync-code-engineering.sh kiro
-# 或一次同步两者
-bash .agents/tools/sync-code-engineering.sh claude kiro
-```
-
-同步脚本会把同一份 `.agents/skills` 和 `.agents/references` 复制到对应 Agent 的项目目录。以后如果更新了 `.agents` 真源，需要重新执行同步。
+`.generated/` 由根目录 `scripts/generate-skills.mjs` 自动产生并被 Git 忽略，不是源码。
 
 ## 核心工程观
 
@@ -77,13 +34,11 @@ bash .agents/tools/sync-code-engineering.sh claude kiro
 - **Ports & Adapters**：数据库、LLM、搜索、文件系统、第三方 SDK 等技术细节停留在边界；
 - **Strategy**：只用于真实存在的算法变化；
 - **Plugin**：只用于可独立增加、移除、组合的扩展能力；
-- **Structured Documentation**：README、AGENTS、ADR、索引与 Why/Invariant/Boundary/Tradeoff 注释共同服务人和 AI；
+- **Structured Documentation**：README、AGENTS、ADR、索引与 Why / Invariant / Boundary / Tradeoff 注释共同服务人和 AI；
 - **Evidence-based Verification**：没有新鲜验证证据，不宣称完成；
 - **Anti-overengineering**：不为了“架构感”制造接口、Factory、Strategy、Plugin 或碎片化小文件。
 
 优先级始终是：**用户明确要求 > 项目明确合同/规范 > 项目既有合理架构 > 本 Skill Group 默认原则**。
-
-详细标准位于安装后的 `.agents/references/`。
 
 ## Skill 一览
 
@@ -147,17 +102,44 @@ Implementation
 $code-review <scope>
 ```
 
-## 人工 Gate
+## 生成不同 AI 工具格式
 
-本组刻意**不提供一键串行执行全部生命周期的总控 Skill**。高影响阶段结束后由人 Review，再显式进入下一阶段。前序 artifact 应持久化，后序 Skill 读取 artifact，而不是依赖聊天历史维持项目事实。
+在仓库根目录：
 
-若项目已有 Requirements / Specs / Reviews / ADR 目录，优先沿用；没有时可回退到：
-
-```text
-.engineering/
-├── audits/
-├── plans/
-└── reviews/
+```bash
+pnpm generate -- --group code-engineering
 ```
 
-复制到项目后，`.agents/skills/README.md` 也包含一份项目内快速调用索引。
+生成结果位于：
+
+```text
+skills-group/code-engineering/.generated/
+├── codex/.agents/...
+├── cursor/.cursor/...
+├── gemini/.gemini/...
+├── claude/.claude/...
+├── kiro/.kiro/...
+└── copilot/.github/...
+```
+
+Skill 内部统一使用 `../../references/...` 访问共享资料，因此无论生成到 `.agents`、`.cursor`、`.gemini`、`.claude`、`.kiro` 或 `.github`，相对引用都保持一致。
+
+## 迁移到现有项目
+
+推荐直接从仓库根目录执行：
+
+```bash
+pnpm migrate
+```
+
+迁移器会：
+
+1. 询问目标项目路径；
+2. 选择 Skill Group；
+3. 选择一个或多个 AI 工具格式；
+4. 自动生成对应格式；
+5. 检查目标项目同名文件冲突；
+6. 合并到目标项目，保留无关文件；
+7. 提醒你检查目标项目的 `git status` / `git diff`。
+
+本 Skill Group 不提供一键自动执行整个工程生命周期的总控 Skill；高影响阶段应保留人工 Review Gate。

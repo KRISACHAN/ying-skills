@@ -1,0 +1,14 @@
+{
+  "name": "ying-skills",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Reusable AI coding skill groups and migration tooling.",
+  "scripts": {
+    "generate": "node scripts/generate-skills.mjs",
+    "migrate": "node scripts/migrate-skills.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
