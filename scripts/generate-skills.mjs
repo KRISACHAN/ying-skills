@@ -1,4 +1,4 @@
-import { cp, mkdir, readdir, rm, stat } from 'node:fs/promises';
+import { access, cp, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -62,6 +62,9 @@ export async function generateSkillGroup(group, tools = ['all']) {
     );
   }
 
+  const skillEntries = (await readdir(skillsDir, { withFileTypes: true })).filter(
+    (entry) => entry.isDirectory() && !entry.name.startsWith('.'),
+  );
   const selectedTools = normalizeTools(tools);
   const outputs = [];
 
@@ -69,11 +72,36 @@ export async function generateSkillGroup(group, tools = ['all']) {
     const layout = TOOL_LAYOUTS[tool];
     const outputRoot = generatedToolRoot(group, tool);
     const agentRoot = path.join(outputRoot, layout.root);
+    const generatedSkillsRoot = path.join(agentRoot, 'skills');
 
     await rm(outputRoot, { recursive: true, force: true });
-    await mkdir(agentRoot, { recursive: true });
-    await cp(skillsDir, path.join(agentRoot, 'skills'), { recursive: true, force: true });
-    await cp(referencesDir, path.join(agentRoot, 'references'), { recursive: true, force: true });
+    await mkdir(generatedSkillsRoot, { recursive: true });
+
+    for (const skillEntry of skillEntries) {
+      const sourceSkill = path.join(skillsDir, skillEntry.name);
+      const targetSkill = path.join(generatedSkillsRoot, skillEntry.name);
+      const sourceSkillFile = path.join(sourceSkill, 'SKILL.md');
+
+      try {
+        await access(sourceSkillFile);
+      } catch {
+        continue;
+      }
+
+      await cp(sourceSkill, targetSkill, { recursive: true, force: true });
+      await cp(referencesDir, path.join(targetSkill, 'references', '_shared'), {
+        recursive: true,
+        force: true,
+      });
+
+      const generatedSkillFile = path.join(targetSkill, 'SKILL.md');
+      const skillContent = await readFile(generatedSkillFile, 'utf8');
+      await writeFile(
+        generatedSkillFile,
+        skillContent.replaceAll('../../references/', './references/_shared/'),
+        'utf8',
+      );
+    }
 
     outputs.push({ tool, label: layout.label, path: outputRoot, agentRoot });
   }
