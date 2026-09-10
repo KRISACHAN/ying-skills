@@ -1,7 +1,6 @@
+import { checkbox, confirm, input, select } from '@inquirer/prompts';
 import { access, copyFile, mkdir, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
-import readline from 'node:readline/promises';
-import { stdin as input, stdout as output } from 'node:process';
 import {
   TOOL_LAYOUTS,
   generateSkillGroup,
@@ -34,33 +33,6 @@ function parseArgs(argv) {
 
 function printHelp() {
   console.log(`Usage: pnpm migrate -- [options]\n\nInteractive mode is used for any omitted option.\n\nOptions:\n  -p, --path <path>    Target project path\n  -g, --group <name>   Skill group to migrate\n  -t, --tool <name>    AI tool format (repeatable, or all)\n  -y, --yes            Overwrite colliding skill files without confirmation\n  -h, --help           Show this help\n\nSupported tools: ${Object.keys(TOOL_LAYOUTS).join(', ')}, all`);
-}
-
-async function promptChoice(rl, title, items, defaultIndex = 0, allowAll = false) {
-  console.log(`\n${title}`);
-  items.forEach((item, index) => console.log(`  ${index + 1}. ${item.label}`));
-  if (allowAll) console.log('  0. All');
-
-  while (true) {
-    const fallback = defaultIndex === -1 ? 'all' : String(defaultIndex + 1);
-    const answer = (await rl.question(`Select [${fallback}]: `)).trim();
-    if (!answer) {
-      return defaultIndex === -1
-        ? items.map((item) => item.value)
-        : [items[defaultIndex].value];
-    }
-    if (allowAll && answer === '0') return items.map((item) => item.value);
-
-    const indexes = answer.split(',').map((value) => Number(value.trim()));
-    if (
-      indexes.every(
-        (value) => Number.isInteger(value) && value >= 1 && value <= items.length,
-      )
-    ) {
-      return [...new Set(indexes.map((value) => items[value - 1].value))];
-    }
-    console.log('Invalid selection. Enter a number or comma-separated numbers.');
-  }
 }
 
 async function walkFiles(root, relative = '') {
@@ -114,90 +86,83 @@ async function main() {
   const options = parseArgs(process.argv.slice(2));
   if (options.help) return printHelp();
 
-  const rl = readline.createInterface({ input, output });
-  try {
-    console.log('Ying Skills Migration');
-    console.log(
-      'Merges generated skill files into an existing project. Existing unrelated files are preserved.',
-    );
+  console.log('Ying Skills Migration');
+  console.log(
+    'Merges generated skill files into an existing project. Existing unrelated files are preserved.',
+  );
 
-    let projectPath = options.projectPath ?? (await rl.question('\nProject path: ')).trim();
-    if (!projectPath) throw new Error('Project path is required.');
-    projectPath = path.resolve(expandHome(projectPath));
-    if (!(await isDirectory(projectPath))) {
-      throw new Error(`Project directory does not exist: ${projectPath}`);
-    }
-
-    const groups = await listSkillGroups();
-    if (groups.length === 0) throw new Error('No skill groups found.');
-
-    let group = options.group;
-    if (group) {
-      if (!groups.includes(group)) throw new Error(`Unknown skill group: ${group}`);
-    } else {
-      [group] = await promptChoice(
-        rl,
-        'Skill group',
-        groups.map((name) => ({ label: name, value: name })),
-      );
-    }
-
-    let tools;
-    if (options.tools.length) {
-      tools = normalizeTools(options.tools);
-    } else {
-      const toolItems = Object.entries(TOOL_LAYOUTS).map(([value, config]) => ({
-        value,
-        label: `${config.label} (${config.root}/skills)`,
-      }));
-      tools = await promptChoice(
-        rl,
-        'AI tool format (comma-separated supported)',
-        toolItems,
-        0,
-        true,
-      );
-    }
-
-    await generateSkillGroup(group, tools);
-
-    const allCollisions = [];
-    for (const tool of tools) {
-      const collisions = await existingCollisions(generatedToolRoot(group, tool), projectPath);
-      allCollisions.push(...collisions.map((file) => `[${tool}] ${file}`));
-    }
-
-    if (allCollisions.length) {
-      console.log(`\n${allCollisions.length} existing file(s) will be updated:`);
-      allCollisions.slice(0, 20).forEach((file) => console.log(`  - ${file}`));
-      if (allCollisions.length > 20) {
-        console.log(`  ... and ${allCollisions.length - 20} more`);
-      }
-
-      if (!options.yes) {
-        const confirm = (
-          await rl.question('\nContinue and overwrite only these colliding files? [y/N]: ')
-        )
-          .trim()
-          .toLowerCase();
-        if (confirm !== 'y' && confirm !== 'yes') {
-          console.log('Migration cancelled.');
-          return;
-        }
-      }
-    }
-
-    for (const tool of tools) {
-      await mergeDirectory(generatedToolRoot(group, tool), projectPath);
-      console.log(`Merged ${TOOL_LAYOUTS[tool].label} format into ${projectPath}`);
-    }
-
-    console.log(
-      '\nMigration complete. Review git status/diff in the target project before committing.',
-    );
-  } finally {
-    rl.close();
+  let projectPath =
+    options.projectPath ?? (await input({ message: 'Project path', required: true })).trim();
+  if (!projectPath) throw new Error('Project path is required.');
+  projectPath = path.resolve(expandHome(projectPath));
+  if (!(await isDirectory(projectPath))) {
+    throw new Error(`Project directory does not exist: ${projectPath}`);
   }
+
+  const groups = await listSkillGroups();
+  if (groups.length === 0) throw new Error('No skill groups found.');
+
+  let group = options.group;
+  if (group) {
+    if (!groups.includes(group)) throw new Error(`Unknown skill group: ${group}`);
+  } else {
+    group = await select({
+      message: 'Skill group',
+      choices: groups.map((name) => ({ name, value: name })),
+    });
+  }
+
+  let tools;
+  if (options.tools.length) {
+    tools = normalizeTools(options.tools);
+  } else {
+    const toolItems = Object.entries(TOOL_LAYOUTS).map(([value, config], index) => ({
+      name: `${config.label} (${config.root}/skills)`,
+      value,
+      checked: index === 0,
+    }));
+    tools = await checkbox({
+      message: 'AI tool format',
+      choices: toolItems,
+      required: true,
+    });
+  }
+
+  await generateSkillGroup(group, tools);
+
+  const allCollisions = [];
+  for (const tool of tools) {
+    const collisions = await existingCollisions(generatedToolRoot(group, tool), projectPath);
+    allCollisions.push(...collisions.map((file) => `[${tool}] ${file}`));
+  }
+
+  if (allCollisions.length) {
+    console.log(`\n${allCollisions.length} existing file(s) will be updated:`);
+    allCollisions.slice(0, 20).forEach((file) => console.log(`  - ${file}`));
+    if (allCollisions.length > 20) {
+      console.log(`  ... and ${allCollisions.length - 20} more`);
+    }
+
+    if (!options.yes) {
+      const shouldOverwrite = await confirm({
+        message: 'Continue and overwrite only these colliding files?',
+        default: false,
+      });
+      if (!shouldOverwrite) {
+        console.log('Migration cancelled.');
+        return;
+      }
+    }
+  }
+
+  for (const tool of tools) {
+    await mergeDirectory(generatedToolRoot(group, tool), projectPath);
+    console.log(`Merged ${TOOL_LAYOUTS[tool].label} format into ${projectPath}`);
+  }
+
+  console.log(
+    '\nMigration complete. Review git status/diff in the target project before committing.',
+  );
 }
 
 main().catch((error) => {

@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "description": "Reusable AI coding skill groups and migration tooling.",
+  "dependencies": {
+    "@inquirer/prompts": "^7.10.1"
+  },
   "scripts": {
     "generate": "node scripts/generate-skills.mjs",
     "migrate": "node scripts/migrate-skills.mjs"
