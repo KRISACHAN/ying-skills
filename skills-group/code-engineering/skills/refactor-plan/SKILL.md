@@ -42,11 +42,25 @@ File count, LOC, or finding count alone is not a reason to split.
 1. **Restate confirmed problems** — do not silently expand scope beyond the audit/user request.
 2. **Freeze observable contracts** — public APIs/types, persisted schema/data semantics, errors, ordering, side effects, UI/API/IPC behavior, concurrency, compatibility.
 3. **Describe target state** — responsibilities and dependency direction first; file/folder layout second.
-4. **Define Work Items** — group related changes by responsibility/root cause; use named refactorings where useful.
-5. **Order the work** — dependencies, safest sequence, characterization coverage, migration or rollback concerns.
-6. **Define verification strategy** — baseline, focused checks during execution, scope-level regression at completion, and any characterization tests needed before structure changes.
-7. **Define stop conditions** — unexplained test failure, required behavior change, migration ambiguity, or architecture uncertainty should stop implementation.
-8. **Check for overengineering** — every introduced layer/interface/strategy/plugin/adapter must have a concrete responsibility or variation.
+4. **Resolve hotspot disposition** — carry forward every major item from the audit Hotspot Watchlist. Map each one to a Work Item, explicitly preserve it with a cohesion/invariant rationale, or mark it as needing a user/requirement decision. Do not let structural hotspots vanish from the plan simply because behavioral findings are more urgent.
+5. **Define Work Items** — group related changes by responsibility/root cause; use named refactorings where useful.
+6. **Order the work** — dependencies, safest sequence, characterization coverage, migration or rollback concerns.
+7. **Define verification strategy** — baseline, focused checks during execution, scope-level regression at completion, and any characterization tests needed before structure changes.
+8. **Define convergence criteria** — include a post-implementation hotspot re-check so tests passing alone cannot close a structural refactor while obvious mixed-responsibility hotspots remain.
+9. **Define stop conditions** — unexplained test failure, required behavior change, migration ambiguity, or architecture uncertainty should stop implementation.
+10. **Check for overengineering** — every introduced layer/interface/strategy/plugin/adapter must have a concrete responsibility or variation.
+
+## Hotspot Planning Rule
+
+A large or complex file is not automatically a Work Item. Size is a trigger to inspect reasons to change and cohesion.
+
+For each major hotspot, the plan must choose one of these outcomes:
+
+- **Refactor structurally** — when responsibilities, abstraction levels, ownership, or reasons to change are materially mixed;
+- **Preserve intentionally** — when the file represents one cohesive state machine, algorithm, transaction, lifecycle, or invariant and splitting would make control flow harder to understand;
+- **Defer explicitly** — when safe structural action depends on missing behavior/contract evidence.
+
+If preserving a hotspot, record why. If refactoring it, plan around responsibility boundaries, not a target line count.
 
 ## Plan Template
 
@@ -55,6 +69,7 @@ Scope
 Confirmed Problems / Evidence
 Preserved Contracts
 Target State
+Hotspot Disposition
 Non-goals
 
 Work Items
@@ -64,6 +79,7 @@ Work Items
 
 Execution Order
 Verification Strategy
+Convergence Criteria
 Risks
 Stop / Rollback Conditions
 Documentation Impact

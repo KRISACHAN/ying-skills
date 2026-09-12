@@ -51,7 +51,31 @@ Do not pause merely because one internal Work Item finished.
 4. **Verify during execution** — run focused tests/typecheck/lint at meaningful risk boundaries, not mechanically after every trivial edit.
 5. **Do not hide failures** — do not weaken tests, widen catch blocks, suppress types/lint, or change error semantics merely to make checks pass.
 6. **Scope-level regression** — after the approved scope is complete, run the package/app/integration/E2E gates required by the plan and blast radius.
-7. **Convergence check** — confirm the target state is reached, preserved contracts remain intact, unrelated behavior did not drift, and required documentation is synchronized or explicitly deferred.
+7. **Hotspot convergence check** — revisit the audit/plan Hotspot Watchlist and any new hotspots created by the refactor. Do not declare a structural refactor complete merely because tests pass while obvious mixed-responsibility hotspots remain.
+8. **Convergence check** — confirm the target state is reached, preserved contracts remain intact, unrelated behavior did not drift, hotspot dispositions are resolved, and required documentation is synchronized or explicitly deferred.
+
+## Hotspot Convergence Check
+
+Large or long files are **review triggers, not automatic defects**. LOC must never be the sole reason to split a file, but major hotspots must be consciously re-evaluated before completion.
+
+For every major pre-existing hotspot and any significant new hotspot, ask:
+
+- Does it still have multiple independent reasons to change?
+- Does it mix orchestration, domain/policy decisions, validation, IO/infrastructure, persistence, or presentation?
+- Are abstraction levels mixed enough that the primary control flow is difficult to follow?
+- Is there a natural responsibility/module boundary suitable for Extract Function, Move Function, or Extract Module?
+- Did the refactor merely move complexity into another giant coordinator/helper/manager?
+- Would further splitting harm a cohesive state machine, algorithm, transaction, lifecycle, ordering constraint, or other invariant?
+
+Allowed outcomes:
+
+- **RESOLVED** — responsibilities were separated and the resulting modules are more cohesive/navigation-friendly;
+- **COHESIVE / PRESERVED** — hotspot remains intentionally because one invariant/control flow should stay together; record the rationale;
+- **DEFERRED / BLOCKED** — safe structural improvement needs missing contract/behavior evidence or would exceed the approved scope; record the reason and remaining risk.
+
+A hotspot may remain large. What is not acceptable is leaving it unexamined or claiming structural completion solely from green verification.
+
+Do not chase arbitrary file-size targets. Avoid replacing one large file with many pass-through wrappers, `Manager`/`Helper`/`Processor` shells, or abstractions that only relocate complexity.
 
 ## Boundaries
 
@@ -69,6 +93,7 @@ Report:
 - actual structural changes;
 - preserved contracts;
 - verification evidence;
+- hotspot convergence outcomes and rationale for any intentionally retained hotspots;
 - any divergence from plan;
 - intentionally deferred issues.
 

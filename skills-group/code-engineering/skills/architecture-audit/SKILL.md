@@ -32,10 +32,29 @@ Code is read-only. Writing an audit artifact is allowed; changing production/tes
 3. **Architecture map** — modules/layers, dependency direction, data flow, state/persistence, network/filesystem/process boundaries, composition roots, extension points.
 4. **Verification map** — tests and checks that protect the scope, plus important unprotected behavior.
 5. **Documentation map** — README/AGENTS/ADR/spec/index coverage and obvious drift.
-6. **Hotspot analysis** — large files/functions, change concentration, fan-in/fan-out, broad interfaces, mixed responsibilities, duplicated knowledge, difficult-to-test seams.
+6. **Hotspot analysis** — identify structurally significant large files/functions, change concentration, fan-in/fan-out, broad interfaces, mixed responsibilities, duplicated knowledge, difficult-to-test seams. Maintain a **Hotspot Watchlist** for hotspots that the later plan/execution must explicitly resolve or intentionally preserve.
 7. **Pattern analysis** — identify useful or misused layering, Port/Adapter, Strategy, Plugin, and unnecessary abstractions.
 8. **Diagnose root causes** — for each meaningful issue record evidence → cost → likely root cause → safe direction → risk.
 9. **Assess scope fit** — prefer keeping the current package/app/module as one refactor scope. Recommend sub-scopes only when responsibility, contract, rollback/migration risk, verification strategy, or context size forms a real independent boundary.
+
+## Hotspot Watchlist
+
+LOC is a discovery signal, not a verdict. Do not mark a file defective merely because it is long, but do not let a major hotspot disappear from the audit merely because tests pass.
+
+For each structurally significant hotspot, explicitly judge:
+
+- how many independent reasons to change it has;
+- whether it mixes orchestration, policy/domain rules, validation, IO/infrastructure, persistence, or presentation;
+- whether abstraction levels are mixed enough to obscure the main flow;
+- whether cohesion, testability, navigability, fan-in/fan-out, or change blast radius are poor;
+- whether there are natural ownership boundaries suitable for Extract Function / Move Function / Extract Module;
+- whether keeping it intact is justified because it represents one cohesive state machine, algorithm, transaction, lifecycle, or other invariant that would become harder to understand if fragmented.
+
+Classify each watchlist item with one of these dispositions:
+
+- **STRUCTURAL ACTION LIKELY** — responsibilities or reasons to change are mixed enough that planning should address it;
+- **COHESIVE / PRESERVE** — long or complex, but splitting would reduce clarity or break a meaningful invariant; record the reason;
+- **NEEDS PLAN DECISION** — evidence is insufficient for the audit to choose safely.
 
 ## Required Output Sections
 
@@ -46,7 +65,7 @@ Code is read-only. Writing an audit artifact is allowed; changing production/tes
 - Public Contracts / Invariants
 - Verification Map
 - Documentation / Navigation Map
-- Hotspots
+- Hotspots / Hotspot Watchlist
 - Evidence-backed Findings
 - Scope Fit: keep as one scope or split, with reasons
 - Recommended Direction (not implementation plan)
