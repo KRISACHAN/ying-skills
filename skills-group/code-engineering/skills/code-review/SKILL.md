@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: Optional independent review of implemented code for correctness, solution/spec compliance, Clean Code and refactoring quality, architecture boundaries, Strategy/Plugin/Adapter fit, security/performance risks, verification gaps, and documentation drift. Review only; do not fix findings.
+description: Optional independent review of implemented code for correctness, solution/spec compliance, Clean Code and refactoring quality, architecture boundaries, Strategy/Plugin/Adapter fit, security/performance risks, verification gaps, structured code-comment quality, and engineering-documentation drift. Review only; do not fix findings.
 ---
 
 # Code Review
@@ -18,7 +18,8 @@ Read:
 - `../../references/layered-architecture.md`
 - `../../references/ports-and-adapters.md`
 - `../../references/strategy-and-plugin.md`
-- `../../references/comments-and-documentation.md`
+- `../../references/code-comments.md`
+- `../../references/engineering-documentation.md`
 - `../../references/verification.md`
 - `../../references/artifact-protocol.md`
 
@@ -33,7 +34,8 @@ Load project-specific standards, nearest module/package docs, related solution/s
 5. **Pattern fit** — Strategy/Plugin/Port/Adapter are justified; flag speculative or missing abstractions with evidence.
 6. **Security & performance** — only evidence-backed risks relevant to the scope.
 7. **Verification gap** — ask not only “is the code wrong?” but also “if this important behavior broke, would a current test/gate fail?”
-8. **Documentation** — Why/invariant/boundary comments and README/ADR/index updates match structural changes.
+8. **Structured code comments** — important modules/APIs/functions preserve enough Purpose / Capability / Responsibility / Boundary / Contract / Lifecycle / Tradeoff context for humans and AI without narrating syntax or inventing unsupported semantics.
+9. **Engineering documentation** — README/AGENTS/ADR/index/module docs match the implemented structure, contracts, data flow, and verification reality.
 
 ## Scope
 
@@ -47,6 +49,8 @@ Prefer reviewing a meaningful completed scope (package/app/module/change) rather
 - Separate blockers from improvements.
 - Do not manufacture findings to reach a quota. `0 findings` is valid.
 - Do not fix code in this skill.
+- Do not demand comments merely because a function/file exists; comment findings must identify missing semantic context that materially harms understanding or safety.
+- Do not demand new docs when an existing source of truth already covers the needed information accurately.
 
 Recommended verdicts: **PASS / WATCH / REQUEST_CHANGES**.
 

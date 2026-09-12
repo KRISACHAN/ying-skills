@@ -16,6 +16,8 @@ Read:
 - `../../references/layered-architecture.md`
 - `../../references/ports-and-adapters.md`
 - `../../references/strategy-and-plugin.md`
+- `../../references/code-comments.md`
+- `../../references/engineering-documentation.md`
 - `../../references/verification.md`
 
 Load the approved Refactor Plan or equivalently precise user-authorized scope and target-project rules first.
@@ -50,9 +52,11 @@ Do not pause merely because one internal Work Item finished.
 3. **Execute Work Items in order** — rename/extract/move/simplify before introducing new abstractions; use Strategy/Plugin/Port only when the approved design and real variation justify them.
 4. **Verify during execution** — run focused tests/typecheck/lint at meaningful risk boundaries, not mechanically after every trivial edit.
 5. **Do not hide failures** — do not weaken tests, widen catch blocks, suppress types/lint, or change error semantics merely to make checks pass.
-6. **Scope-level regression** — after the approved scope is complete, run the package/app/integration/E2E gates required by the plan and blast radius.
-7. **Hotspot convergence check** — revisit the audit/plan Hotspot Watchlist and any new hotspots created by the refactor. Do not declare a structural refactor complete merely because tests pass while obvious mixed-responsibility hotspots remain.
-8. **Convergence check** — confirm the target state is reached, preserved contracts remain intact, unrelated behavior did not drift, hotspot dispositions are resolved, and required documentation is synchronized or explicitly deferred.
+6. **Synchronize code-level knowledge when directly affected** — update structured comments that are made stale by changed responsibility, capability, boundary, invariant, lifecycle, or tradeoff. Do not run a repository-wide comment campaign unless explicitly requested; `$code-comments` exists for dedicated comment work.
+7. **Synchronize engineering docs when directly affected** — update README/AGENTS/ADR/index documents required to keep changed structure/contracts/navigation accurate. Do not run a broad documentation rewrite unless explicitly requested; `$engineering-documentation` exists for dedicated documentation work.
+8. **Scope-level regression** — after the approved scope is complete, run the package/app/integration/E2E gates required by the plan and blast radius.
+9. **Hotspot convergence check** — revisit the audit/plan Hotspot Watchlist and any new hotspots created by the refactor. Do not declare a structural refactor complete merely because tests pass while obvious mixed-responsibility hotspots remain.
+10. **Convergence check** — confirm the target state is reached, preserved contracts remain intact, unrelated behavior did not drift, hotspot dispositions are resolved, and directly affected code comments/engineering docs are synchronized or explicitly deferred.
 
 ## Hotspot Convergence Check
 
@@ -94,6 +98,7 @@ Report:
 - preserved contracts;
 - verification evidence;
 - hotspot convergence outcomes and rationale for any intentionally retained hotspots;
+- code-comment/documentation synchronization performed or deferred;
 - any divergence from plan;
 - intentionally deferred issues.
 

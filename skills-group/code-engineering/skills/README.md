@@ -8,7 +8,8 @@
 | `architecture-audit` | 建立功能/架构图谱并诊断结构问题 |
 | `refactor-plan` | 生成 Scope-level 重构计划、内部 Work Items 与回归策略 |
 | `refactor` | 执行已批准 Scope 的重构并完成验证 |
-| `code-documentation` | 同步结构化注释、README、ADR 与索引 |
+| `code-comments` | 为代码补充/同步结构化语义注释，让人和 AI 理解需求、能力、职责、边界与不变量 |
+| `engineering-documentation` | 维护 README、AGENTS、ADR、架构索引与模块级工程文档 |
 | `solution-review` | 按需审查 PRD/Spec/技术方案/重构方案 |
 | `code-review` | 按需审查实际代码实现与验证缺口 |
 | `review-followup` | 按需验证并处理 Review Findings |
@@ -20,8 +21,18 @@ project-guardrails          # 通常每项目一次
   → architecture-audit
   → refactor-plan
   → refactor
-  → code-documentation（按需）
 ```
+
+支撑能力按需独立调用：
+
+```text
+code-comments
+engineering-documentation
+```
+
+`code-comments` 不是“尽量少写注释”，而是让代码形成可理解的局部知识层。注释应按需要表达 `Purpose / Capability / Responsibility / Boundary / Contract / Lifecycle / Tradeoff` 等语义，不为注释而注释，也不机械复述代码。
+
+`engineering-documentation` 负责 Repository / App / Package / Module 层的 README、AGENTS、ADR 与导航体系，不修改源码注释。
 
 Review 不属于固定链路。用户可在任何需要独立第二意见或质量保证的位置显式调用：
 

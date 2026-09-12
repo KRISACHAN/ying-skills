@@ -1,6 +1,6 @@
 ---
 name: architecture-audit
-description: Read-only codebase reconnaissance and architecture diagnosis for a repository, package, app, or module. Produces a functional/architecture map plus evidence-backed hotspots, code smells, dependency and documentation problems. Use before major refactors or when understanding a brownfield scope. Do not refactor code.
+description: Read-only codebase reconnaissance and architecture diagnosis for a repository, package, app, or module. Produces a functional/architecture map plus evidence-backed hotspots, code smells, dependency, code-comment, and documentation problems. Use before major refactors or when understanding a brownfield scope. Do not refactor code.
 ---
 
 # Architecture Audit
@@ -16,7 +16,8 @@ Read:
 - `../../references/layered-architecture.md`
 - `../../references/ports-and-adapters.md`
 - `../../references/strategy-and-plugin.md`
-- `../../references/comments-and-documentation.md`
+- `../../references/code-comments.md`
+- `../../references/engineering-documentation.md`
 - `../../references/artifact-protocol.md`
 
 Then load the target project's own rules and nearest README/architecture docs.
@@ -31,7 +32,7 @@ Code is read-only. Writing an audit artifact is allowed; changing production/tes
 2. **Functional map** — purpose, responsibilities, non-responsibilities, entry points, public contracts, callers/consumers.
 3. **Architecture map** — modules/layers, dependency direction, data flow, state/persistence, network/filesystem/process boundaries, composition roots, extension points.
 4. **Verification map** — tests and checks that protect the scope, plus important unprotected behavior.
-5. **Documentation map** — README/AGENTS/ADR/spec/index coverage and obvious drift.
+5. **Knowledge/navigation map** — assess whether structured code comments expose important local purpose/capability/boundary/invariant context, and whether README/AGENTS/ADR/spec/index documents provide accurate progressive navigation without drift.
 6. **Hotspot analysis** — identify structurally significant large files/functions, change concentration, fan-in/fan-out, broad interfaces, mixed responsibilities, duplicated knowledge, difficult-to-test seams. Maintain a **Hotspot Watchlist** for hotspots that the later plan/execution must explicitly resolve or intentionally preserve.
 7. **Pattern analysis** — identify useful or misused layering, Port/Adapter, Strategy, Plugin, and unnecessary abstractions.
 8. **Diagnose root causes** — for each meaningful issue record evidence → cost → likely root cause → safe direction → risk.
@@ -64,7 +65,7 @@ Classify each watchlist item with one of these dispositions:
 - Data & Side-effect Flow
 - Public Contracts / Invariants
 - Verification Map
-- Documentation / Navigation Map
+- Code Comment / Engineering Documentation Map
 - Hotspots / Hotspot Watchlist
 - Evidence-backed Findings
 - Scope Fit: keep as one scope or split, with reasons

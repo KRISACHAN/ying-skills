@@ -32,7 +32,8 @@ skills-group/code-engineering/
 │   ├── layered-architecture.md
 │   ├── ports-and-adapters.md
 │   ├── strategy-and-plugin.md
-│   ├── comments-and-documentation.md
+│   ├── code-comments.md
+│   ├── engineering-documentation.md
 │   ├── verification.md
 │   ├── review-system.md
 │   └── artifact-protocol.md
@@ -41,7 +42,8 @@ skills-group/code-engineering/
     ├── architecture-audit/
     ├── refactor-plan/
     ├── refactor/
-    ├── code-documentation/
+    ├── code-comments/
+    ├── engineering-documentation/
     ├── solution-review/
     ├── code-review/
     └── review-followup/
@@ -60,7 +62,8 @@ skills-group/code-engineering/
 - **Ports & Adapters**：数据库、LLM、搜索、文件系统、第三方 SDK 等技术机制停留在可替换边界；
 - **Strategy**：只用于同一职责存在真实可替换算法的场景；
 - **Plugin**：只用于可独立增加、移除、组合的扩展能力；
-- **Structured Documentation**：README、AGENTS/Agent Instructions、ADR、索引，以及 Why / Invariant / Boundary / Tradeoff 注释共同服务人和 AI；
+- **Structured Code Comments**：让代码本身表达需求语义、能力、职责、边界、Contract、Lifecycle 与 Tradeoff，不以“少写”或“多写”为目标；
+- **Engineering Documentation**：README、AGENTS、ADR、Architecture Index 与模块文档形成面向人和 AI 的渐进式知识导航；
 - **Evidence-based Verification**：没有与风险匹配的新鲜验证证据，不宣称完成；
 - **Anti-overengineering**：模式必须解决真实变化、职责或集成问题，不为了“架构感”制造抽象。
 
@@ -105,16 +108,48 @@ package / app / module
 
 | 阶段 | Skill | 作用 | 默认权限 |
 | --- | --- | --- | --- |
-| 1. 建立规范 | `$project-guardrails` | 建立/审计 AI 开发规范、架构边界、验证要求和文档导航 | 可改工程规范/配置/文档；不重构业务行为 |
-| 2. 项目分析 | `$architecture-audit <scope>` | 生成功能/架构图谱、依赖/数据流、Hotspot、坏味道、验证缺口和根因诊断 | 只读代码；可写审计 artifact |
-| 3. 方案制定 | `$refactor-plan <scope-or-audit>` | 将确认的问题收敛成一个 Scope-level 目标、内部 Work Items、行为合同、风险和回归策略 | 不实施生产代码 |
+| 1. 建立规范 | `$project-guardrails` | 建立/审计 AI 开发规范、架构边界、注释/文档规则、验证要求和知识导航 | 可改工程规范/配置/文档；不重构业务行为 |
+| 2. 项目分析 | `$architecture-audit <scope>` | 生成功能/架构图谱、依赖/数据流、Hotspot、坏味道、知识导航与验证缺口 | 只读代码；可写审计 artifact |
+| 3. 方案制定 | `$refactor-plan <scope-or-audit>` | 将确认的问题收敛成 Scope-level 目标、Work Items、行为合同、风险和回归策略 | 不实施生产代码 |
 | 4. 实施与验证 | `$refactor <approved-plan-or-scope>` | 在批准 Scope 内连续实施行为保持式重构，并完成 Scope 级验证 | 可在批准范围内改代码 |
-| 支撑 | `$code-documentation <scope>` | 结构变化后同步注释、README、ADR 和导航索引 | 只改文档/注释，不改运行行为 |
+| 支撑 | `$code-comments <scope>` | 为源码补充/同步结构化语义注释，让人和 AI 理解需求、能力、职责、边界、不变量与生命周期 | 只改源码注释/Doc Comment，不改运行行为 |
+| 支撑 | `$engineering-documentation <scope>` | 维护 README、AGENTS、ADR、Architecture Index 与模块工程文档 | 只改工程文档，不改运行行为或源码注释 |
 | 可选 Review | `$solution-review <artifact>` | 用户需要第二意见时审查 PRD、Spec、技术方案、架构方案或重构计划 | 只审查 |
 | 可选 Review | `$code-review <scope>` | 用户需要独立质量保证时审查实际实现 | 只审查 |
 | 可选 Review | `$review-followup <report>` | 用户决定处理 Review Findings 时，独立验证并只处理成立的问题 | 可按需修改方案 artifact 或代码 |
 
 `0 findings` 是合法 Review 结果。Review Skill 不得为了显得有价值而制造问题。
+
+## 结构化注释与工程文档
+
+这两个能力刻意分开：
+
+```text
+$code-comments
+= 代码级知识层
+= Module/File → API/Class → Function → Inline
+
+$engineering-documentation
+= Repository 级知识导航
+= Repository → App/Package → Module → Contract/ADR
+```
+
+`code-comments` 的目标不是克制到“尽量不写”，而是提供**足够的语义上下文**。根据实际需要表达：
+
+```text
+Purpose
+Capability
+Responsibility
+Boundary / Non-responsibility
+Contract / Invariant
+Lifecycle / Side Effect / Ordering
+Tradeoff / Why
+Requirement semantics
+```
+
+结构统一，但深度按需；不要求每个文件/函数机械填满模板，也不允许用注释复述语法。
+
+`engineering-documentation` 描述当前真实系统，不写“理想中应该是什么”。优先沿用现有 README / AGENTS / ADR / requirements / architecture docs，不建立平行 Source of Truth。
 
 ## 推荐重构流程
 
@@ -126,9 +161,17 @@ $architecture-audit <pkg/app/module>
 $refactor-plan <audit-or-scope>
         ↓
 $refactor <approved-plan-or-scope>
-        ↓
-$code-documentation <scope>            # 仅在结构/文档确实需要同步时执行
 ```
+
+支撑 Skill 按需独立调用：
+
+```text
+Implementation / existing code
+  ├─→ $code-comments <scope>
+  └─→ $engineering-documentation <scope>
+```
+
+重构本身应同步**直接被改动影响**的关键注释/文档；如果需要一次专门的全 Scope 注释或工程文档治理，再调用对应支撑 Skill。
 
 Review 可以由用户插入到任何位置：
 
@@ -150,7 +193,8 @@ PRD / Spec / Fix Plan
   ↓
 Implementation
   ├─→ $code-review        # 可选
-  └─→ $review-followup    # 仅在用户需要时
+  ├─→ $code-comments      # 按需
+  └─→ $engineering-documentation  # 按需
 ```
 
 ## 人工控制
@@ -160,6 +204,7 @@ Implementation
 由用户决定：
 
 - 什么时候进入下一阶段；
+- 是否需要专门的注释/工程文档治理；
 - 要不要 Review；
 - Review 哪个 Scope；
 - 要不要 Followup；
@@ -248,7 +293,9 @@ pnpm migrate -- \
   --tool codex
 ```
 
-迁移采用合并模式：目标 AI 工具目录中原有的无关文件会保留。对于同名生成 Skill / Reference 冲突，脚本会在替换前报告；只有明确提供非交互确认时才会直接覆盖。
+迁移采用合并模式：目标项目中无关文件会保留，同名 Skill / Reference 会按迁移策略覆盖。
+
+> 迁移脚本不会删除目标项目中已经不存在于 Source Group 的旧 Skill。若项目曾迁移旧版 `code-documentation`，升级到本版本后需要手动删除目标项目里的旧 `code-documentation/` 目录一次。
 
 ## 当前支持的工具目录
 

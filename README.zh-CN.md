@@ -29,12 +29,8 @@ ying-skills/
 
 ```bash
 pnpm install
-```
-
-生成全部 Skill Group 的全部工具格式：
-
-```bash
 pnpm generate
+pnpm migrate
 ```
 
 只生成指定 Group / 工具：
@@ -44,31 +40,7 @@ pnpm generate -- --group code-engineering --tool codex
 pnpm generate -- --group code-engineering --tool claude --tool gemini
 ```
 
-交互式迁移到已有项目：
-
-```bash
-pnpm migrate
-```
-
-迁移流程会依次询问：
-
-```text
-项目路径
-  ↓
-Skill Group
-  ↓
-AI 工具
-  ↓
-生成
-  ↓
-冲突检查
-  ↓
-合并
-```
-
-迁移采用合并模式：目标项目中无关文件会保留。如果目标路径已经存在同名 Skill 或 Reference，脚本会先报告冲突，再决定是否覆盖冲突文件。
-
-也支持非交互调用：
+非交互迁移：
 
 ```bash
 pnpm migrate -- \
@@ -77,15 +49,7 @@ pnpm migrate -- \
   --tool codex
 ```
 
-一次迁移到多个工具：
-
-```bash
-pnpm migrate -- \
-  --path ../my-project \
-  --group code-engineering \
-  --tool codex \
-  --tool claude
-```
+迁移采用合并模式：目标项目中无关文件会保留，同名生成文件按迁移覆盖规则处理。已经从 Source Group 删除的旧 Skill 不会自动从目标项目删除。
 
 ## 当前支持的 AI 工具格式
 
@@ -112,8 +76,6 @@ skills-group/<group>/.generated/
 
 面向 AI 辅助软件开发与 Brownfield 重构的通用代码工程工作流。
 
-核心流程：
-
 ```text
 建立规范
   ↓
@@ -124,6 +86,8 @@ skills-group/<group>/.generated/
 实施 + 验证
 ```
 
-同时提供独立 Review 子系统，可复用于重构、Feature、Bugfix、架构方案和普通代码开发。
+支撑能力中，**结构化代码注释**与**工程文档**已经拆成独立 Skill：代码注释负责在源码中保存需求语义、能力、职责、边界、Contract、Lifecycle 与 Tradeoff；工程文档负责 README、AGENTS、ADR、Architecture Index 与 Repository 级渐进式导航。
 
-默认工程基线强调：Refactoring、Clean Code、Module-first 与分层架构、Ports & Adapters、在真实变化点使用 Strategy / Plugin、面向人和 AI 的结构化文档，以及基于证据的验证。
+同时提供独立、可选的 Review 子系统，可复用于重构、Feature、Bugfix、架构方案和普通代码开发。
+
+默认工程基线强调：Refactoring、Clean Code、Module-first 与分层架构、Ports & Adapters、在真实变化点使用 Strategy / Plugin、面向人和 AI 的结构化语义上下文、Anti-overengineering，以及基于证据的验证。

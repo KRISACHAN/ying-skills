@@ -16,6 +16,8 @@ Read:
 - `../../references/layered-architecture.md`
 - `../../references/ports-and-adapters.md`
 - `../../references/strategy-and-plugin.md`
+- `../../references/code-comments.md`
+- `../../references/engineering-documentation.md`
 - `../../references/verification.md`
 - `../../references/artifact-protocol.md`
 
@@ -46,9 +48,10 @@ File count, LOC, or finding count alone is not a reason to split.
 5. **Define Work Items** — group related changes by responsibility/root cause; use named refactorings where useful.
 6. **Order the work** — dependencies, safest sequence, characterization coverage, migration or rollback concerns.
 7. **Define verification strategy** — baseline, focused checks during execution, scope-level regression at completion, and any characterization tests needed before structure changes.
-8. **Define convergence criteria** — include a post-implementation hotspot re-check so tests passing alone cannot close a structural refactor while obvious mixed-responsibility hotspots remain.
-9. **Define stop conditions** — unexplained test failure, required behavior change, migration ambiguity, or architecture uncertainty should stop implementation.
-10. **Check for overengineering** — every introduced layer/interface/strategy/plugin/adapter must have a concrete responsibility or variation.
+8. **Define knowledge synchronization** — identify whether the refactor changes code-level semantic context that requires structured comment updates and/or repository-level knowledge that requires README/AGENTS/ADR/index updates. Keep these as distinct concerns.
+9. **Define convergence criteria** — include a post-implementation hotspot re-check so tests passing alone cannot close a structural refactor while obvious mixed-responsibility hotspots remain.
+10. **Define stop conditions** — unexplained test failure, required behavior change, migration ambiguity, or architecture uncertainty should stop implementation.
+11. **Check for overengineering** — every introduced layer/interface/strategy/plugin/adapter must have a concrete responsibility or variation.
 
 ## Hotspot Planning Rule
 
@@ -82,7 +85,8 @@ Verification Strategy
 Convergence Criteria
 Risks
 Stop / Rollback Conditions
-Documentation Impact
+Code Comment Impact
+Engineering Documentation Impact
 Definition of Done
 ```
 
