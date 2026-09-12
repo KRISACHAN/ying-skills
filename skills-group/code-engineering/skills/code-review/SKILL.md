@@ -1,11 +1,13 @@
 ---
 name: code-review
-description: Independent review of implemented code for correctness, solution/spec compliance, Clean Code and refactoring quality, architecture boundaries, Strategy/Plugin/Adapter fit, security/performance risks, verification gaps, and documentation drift. Review only; do not fix findings.
+description: Optional independent review of implemented code for correctness, solution/spec compliance, Clean Code and refactoring quality, architecture boundaries, Strategy/Plugin/Adapter fit, security/performance risks, verification gaps, and documentation drift. Review only; do not fix findings.
 ---
 
 # Code Review
 
 Review what was actually implemented.
+
+This Skill is **optional**. Run it only when the user explicitly requests review, or when project policy explicitly requires one. The Skill does not decide when or how often review must happen.
 
 Read:
 
@@ -37,6 +39,8 @@ Load project-specific standards, nearest module/package docs, related solution/s
 
 Honor explicit user scope first. If no scope is supplied, use the project's normal review convention; if none exists, prefer staged diff, then unstaged diff, and stop if there is nothing concrete to review.
 
+Prefer reviewing a meaningful completed scope (package/app/module/change) rather than forcing a review after every small internal work item.
+
 ## Findings
 
 - Findings require evidence and impact; cite path/line/symbol when possible.
@@ -46,4 +50,6 @@ Honor explicit user scope first. If no scope is supplied, use the project's norm
 
 Recommended verdicts: **PASS / WATCH / REQUEST_CHANGES**.
 
-Persist the report using project conventions or the fallback artifact protocol, including standards consulted, verification evidence observed, and gaps not independently verified.
+Persist the report when the user/project wants review history; include standards consulted, verification evidence observed, and gaps not independently verified.
+
+Do not automatically trigger followup or re-review. The user decides whether findings need action and whether another review is worth the cost.

@@ -35,6 +35,7 @@ Code is read-only. Writing an audit artifact is allowed; changing production/tes
 6. **Hotspot analysis** — large files/functions, change concentration, fan-in/fan-out, broad interfaces, mixed responsibilities, duplicated knowledge, difficult-to-test seams.
 7. **Pattern analysis** — identify useful or misused layering, Port/Adapter, Strategy, Plugin, and unnecessary abstractions.
 8. **Diagnose root causes** — for each meaningful issue record evidence → cost → likely root cause → safe direction → risk.
+9. **Assess scope fit** — prefer keeping the current package/app/module as one refactor scope. Recommend sub-scopes only when responsibility, contract, rollback/migration risk, verification strategy, or context size forms a real independent boundary.
 
 ## Required Output Sections
 
@@ -47,9 +48,12 @@ Code is read-only. Writing an audit artifact is allowed; changing production/tes
 - Documentation / Navigation Map
 - Hotspots
 - Evidence-backed Findings
+- Scope Fit: keep as one scope or split, with reasons
 - Recommended Direction (not implementation plan)
 - Open Questions / Verification Gaps
 
 Findings must include concrete paths/symbols/lines when available. File size alone is not a defect; judge cohesion, reasons to change, blast radius, testability, and navigability.
+
+Do not turn each finding into a future Refactor Unit. The audit diagnoses problems; the planning skill decides how related findings should be grouped into a concise scope-level plan.
 
 Persist the result using project conventions or the fallback artifact protocol. Stop after the audit; do not start refactoring.

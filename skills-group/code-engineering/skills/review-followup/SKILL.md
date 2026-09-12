@@ -1,11 +1,13 @@
 ---
 name: review-followup
-description: Validate and resolve findings from a solution-review or code-review report. Classifies each finding as Valid, Partially Valid, Invalid, or Obsolete before changing anything; then applies minimal fixes to the solution artifact or code and performs appropriate verification. Does not blindly obey review findings.
+description: Optionally validate and resolve findings from a solution-review or code-review report. Classifies each selected finding as Valid, Partially Valid, Invalid, or Obsolete before changing anything; then applies minimal fixes and appropriate verification. Does not blindly obey review findings and does not require automatic re-review.
 ---
 
 # Review Followup
 
 Treat a review report as claims to verify, not absolute authority.
+
+This Skill is **optional**. Run it only when the user chooses to act on review findings. The user may choose all findings, selected findings, or none.
 
 Read:
 
@@ -17,9 +19,9 @@ Also load the reference files used by the originating review type and the curren
 
 ## Workflow
 
-1. **Load original report and current state** — identify review type, reviewed baseline, and whether code/artifact has changed since.
-2. **Verify each finding independently** against source artifacts, code, tests, contracts, and project rules.
-3. **Classify** every finding:
+1. **Load the report and current state** — identify review type, reviewed baseline, selected findings, and whether code/artifact has changed since.
+2. **Verify each selected finding independently** against source artifacts, code, tests, contracts, and project rules.
+3. **Classify** each selected finding:
    - `Valid` — evidence and impact are correct.
    - `Partially Valid` — core concern is real but scope/severity/remedy is overstated or incomplete.
    - `Invalid` — evidence/assumption is wrong or conflicts with authoritative project contract.
@@ -27,14 +29,17 @@ Also load the reference files used by the originating review type and the curren
 4. **Resolve valid concerns minimally**:
    - solution finding → edit the solution/spec/plan, preserving unrelated content;
    - code finding → edit code/tests/docs as required, respecting the approved solution.
-5. **Verify** relevant behavior. For code fixes, run focused checks and the regression required by blast radius. For solution fixes, re-check internal consistency and referenced contracts.
-6. **Record status** — link back to the original report; state evidence, actual fix or rejection rationale, verification results, and remaining concerns.
+5. **Verify** relevant behavior. For code fixes, run focused checks and regression appropriate to blast radius. For solution fixes, re-check internal consistency and referenced contracts.
+6. **Record outcome** when useful — evidence, actual fix or rejection rationale, verification results, and remaining concerns.
 
 ## Boundaries
 
 - Do not implement unrelated improvements while resolving findings.
 - Do not weaken tests/contracts to satisfy a reviewer.
 - Do not mark a finding resolved without evidence.
-- Do not automatically run a fresh review and call it approved; the normal next step is to invoke the corresponding review skill again.
+- Do not assume every finding must be handled.
+- Do not automatically invoke a fresh review after followup.
 
-Output a followup artifact when the project keeps review history; otherwise provide a structured summary suitable for re-review.
+Whether to run `solution-review` / `code-review` again is entirely up to the user or an explicit project policy. Re-review is useful when the followup materially changes architecture, contracts, data semantics, or risk; it is unnecessary ceremony for many small corrections.
+
+Output a followup artifact only when the project/user wants review history; otherwise provide a concise structured summary.

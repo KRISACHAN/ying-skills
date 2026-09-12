@@ -4,19 +4,19 @@
 
 A reusable AI coding Skill Group for real software projects.
 
-The goal is not to force every repository into one architecture. The goal is to help AI work inside explicit engineering boundaries through a repeatable lifecycle:
+The default lifecycle is intentionally small:
 
 ```text
-Establish Guardrails
+Guardrails
   ↓
-Analyze the Project
+Architecture Audit
   ↓
-Design the Solution / Refactor Plan
+Plan
   ↓
 Implement + Verify
 ```
 
-Review is an independent cross-cutting quality system that can be used for refactoring, features, bug fixes, architecture proposals, migrations, and ordinary development work.
+Review is an **optional cross-cutting tool**, not a mandatory gate. The user decides whether to run `solution-review`, `code-review`, or `review-followup`, and how many times to run them.
 
 ## Source Layout
 
@@ -56,11 +56,11 @@ All Skills share the same default engineering philosophy:
 - **Refactoring** — behavior-preserving, incremental changes with continuous verification.
 - **Clean Code** — clear naming, focused responsibilities, high cohesion, low coupling, explicit side effects, and reduced duplication of knowledge.
 - **Module-first architecture** — organize by business/capability boundaries first, then layer inside modules where useful.
-- **Layered architecture** — keep Domain, Application, Ports, Infrastructure, Interface, and Composition responsibilities explicit when the project benefits from those boundaries.
+- **Layered architecture** — keep Domain, Application, Ports, Infrastructure, Interface, and Composition responsibilities explicit when useful.
 - **Ports & Adapters** — keep databases, LLMs, search engines, filesystems, SDKs, and other external mechanisms at replaceable boundaries.
 - **Strategy** — use when one responsibility has real interchangeable algorithms.
 - **Plugin** — use for independently addable/removable/composable extension capabilities.
-- **Structured documentation** — README, AGENTS/instructions, ADRs, indexes, and Why/Invariant/Boundary/Tradeoff comments should serve both humans and AI.
+- **Structured documentation** — README, AGENTS/instructions, ADRs, indexes, and Why/Invariant/Boundary/Tradeoff comments serve both humans and AI.
 - **Evidence-based verification** — do not claim completion without fresh evidence appropriate to the risk.
 - **Anti-overengineering** — patterns must solve real variation, ownership, or integration problems; do not create abstraction for appearance.
 
@@ -73,93 +73,116 @@ Explicit user instruction
   > Code Engineering defaults
 ```
 
+## Default Scope Granularity
+
+The default execution unit is a meaningful **scope**, not an individual finding.
+
+Prefer:
+
+```text
+package / app / module
+  ↓
+one audit
+  ↓
+one plan
+  ↓
+one implementation pass with internal work items
+  ↓
+one scope-level verification
+```
+
+Split a scope only when there is a real independent boundary, for example:
+
+- different business responsibilities or ownership;
+- different public contracts or persisted schemas;
+- independent rollback/migration risk;
+- materially different verification strategies;
+- the scope is too large for reliable understanding or execution in one pass.
+
+Do **not** split merely because the audit found several issues, several files are large, or the plan contains multiple work items.
+
 ## Skills
 
 | Stage | Skill | Purpose | Default permission |
 | --- | --- | --- | --- |
 | 1. Guardrails | `$project-guardrails` | Establish or audit AI engineering rules, architecture boundaries, verification requirements, and documentation navigation | May update engineering rules/config/docs; no business-behavior refactor |
-| 2. Analysis | `$architecture-audit <scope>` | Build functional/architecture maps, dependency/data-flow maps, hotspots, code smells, verification gaps, and root-cause findings | Read-only code; may write audit artifacts |
-| 3. Planning | `$refactor-plan <scope-or-audit>` | Turn approved findings into target structure, Refactor Units, preserved contracts, risks, and regression plans | No production implementation |
-| 4. Implementation | `$refactor <approved-unit>` | Execute one approved Refactor Unit in small behavior-preserving steps with continuous verification | May change code within approved scope |
+| 2. Analysis | `$architecture-audit <scope>` | Build functional/architecture maps, dependencies/data flow, hotspots, code smells, verification gaps, and root-cause findings | Read-only code; may write audit artifacts |
+| 3. Planning | `$refactor-plan <scope-or-audit>` | Turn confirmed problems into one scope-level target, work items, preserved contracts, risks, and regression strategy | No production implementation |
+| 4. Implementation | `$refactor <approved-plan-or-scope>` | Execute the approved scope in small behavior-preserving steps and verify the whole scope | May change code within approved scope |
 | Support | `$code-documentation <scope>` | Synchronize structured comments, README, ADRs, and navigation after structural changes | Documentation/comments only; no runtime behavior change |
-| Review | `$solution-review <artifact>` | Review PRDs, specs, feature/bugfix plans, architecture proposals, migrations, or refactor plans before implementation | Review only |
-| Review | `$code-review <scope>` | Review actual implementation for correctness, solution compliance, Clean Code, architecture, patterns, verification gaps, and documentation drift | Review only |
-| Review | `$review-followup <report>` | Validate each finding, then minimally fix valid issues or reject invalid ones with evidence | May change solution artifacts or code as required |
+| Optional Review | `$solution-review <artifact>` | Review a PRD/spec/design/refactor plan when the user wants an independent second opinion | Review only |
+| Optional Review | `$code-review <scope>` | Review an implementation when the user wants independent assurance | Review only |
+| Optional Review | `$review-followup <report>` | Validate selected review findings and resolve only the valid ones | May change solution artifacts or code as required |
 
 `0 findings` is a valid review result. Review Skills must not manufacture issues to satisfy a quota.
 
-## Recommended Flow
-
-### Refactoring
+## Recommended Refactor Flow
 
 ```text
-$project-guardrails                    # first adoption or stale project rules
-        ↓ Human Review
+$project-guardrails                    # once per project, or when rules are stale
+        ↓
 $architecture-audit <pkg/app/module>
-        ↓ Human Review
+        ↓
 $refactor-plan <audit-or-scope>
         ↓
-$solution-review <refactor-plan>
-        ↓ Human Review
-$refactor <approved RF unit>
+$refactor <approved-plan-or-scope>
         ↓
-$code-documentation <scope>            # when structure/docs changed
-        ↓
-$code-review <implementation scope>
-        ↓
-PASS → next Refactor Unit
-FAIL → $review-followup <report> → $code-review
+$code-documentation <scope>            # only when documentation/navigation needs updating
 ```
 
-### Feature / Requirement Work
+The user may insert review anywhere:
 
 ```text
-PRD / Spec / Technical Plan
-        ↓
-$solution-review <artifact>
-        ↓ Human Review
+Plan ───────────────→ $solution-review     # optional, any number of times
+Implementation ────→ $code-review         # optional, any number of times
+Review report ─────→ $review-followup      # optional, only when the user wants findings handled
+```
+
+Review does not automatically block the next stage. Re-review after followup is also optional unless the user or project policy explicitly requires it.
+
+## Feature / Bugfix Usage
+
+The review subsystem is reusable outside refactoring:
+
+```text
+PRD / Spec / Fix Plan
+  ├─→ $solution-review    # optional
+  ↓
 Implementation
-        ↓
-$code-review <scope>
-        ↓
-PASS / $review-followup
+  ├─→ $code-review        # optional
+  └─→ $review-followup    # only when requested
 ```
 
-### Bug Fix
+## Human Control
 
-```text
-Bug Analysis / Fix Plan
-        ↓
-$solution-review <artifact>     # optional for simple low-risk fixes
-        ↓
-Implementation
-        ↓
-$code-review <scope>
-```
+This Skill Group intentionally does **not** provide a one-command orchestrator.
 
-## Human Gates
+The user controls:
 
-This Skill Group intentionally does **not** provide a one-command orchestrator that automatically runs the entire lifecycle.
+- when to move to the next stage;
+- whether a review is needed;
+- which scope to review;
+- whether followup is needed;
+- whether a second review is worth the cost.
 
-For high-impact work, the intended control model is:
-
-```text
-AI executes one stage
-  ↓
-Persisted artifact / evidence
-  ↓
-Human review
-  ↓
-Explicitly invoke the next stage
-```
-
-This keeps the human in control of problem interpretation, architecture direction, solution approval, and implementation acceptance.
+The Skills provide engineering discipline; they do not impose ceremony.
 
 ## Artifact Protocol
 
-Existing project conventions always win. If the repository already has Requirements, Specs, ADRs, review archives, or technical-design directories, use them.
+Persist only artifacts that carry durable information across sessions or stages. Existing project conventions always win.
 
-If no convention exists, the fallback is:
+Typical durable artifacts:
+
+```text
+Audit
+Plan
+Implementation / verification summary when useful
+Review report when the user explicitly requests review
+```
+
+Do not create one artifact per tiny refactoring step unless the project explicitly requires that level of traceability.
+
+If no project convention exists, the fallback is:
 
 ```text
 .engineering/
@@ -168,7 +191,7 @@ If no convention exists, the fallback is:
 └── reviews/
 ```
 
-See [`references/artifact-protocol.md`](./references/artifact-protocol.md) for the fallback contract.
+See [`references/artifact-protocol.md`](./references/artifact-protocol.md).
 
 ## Generate Tool-specific Formats
 
@@ -206,7 +229,7 @@ Each generated Skill is self-contained:
     └── _shared/
 ```
 
-The generator copies the shared group references into each generated Skill and rewrites source references such as `../../references/...` to `./references/_shared/...`.
+The generator copies shared references into each generated Skill and rewrites source references such as `../../references/...` to `./references/_shared/...`.
 
 ## Migrate into a Project
 

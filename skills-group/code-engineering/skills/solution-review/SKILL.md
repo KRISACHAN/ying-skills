@@ -1,11 +1,13 @@
 ---
 name: solution-review
-description: Independent review of an engineering solution artifact before implementation: PRD/spec, feature or bugfix plan, architecture/design proposal, migration plan, or refactor plan. Checks problem fidelity, completeness, boundaries, feasibility, overengineering, risk, and verification. Review only; do not implement the solution.
+description: Optional independent review of an engineering solution artifact before implementation: PRD/spec, feature or bugfix plan, architecture/design proposal, migration plan, or refactor plan. Checks problem fidelity, completeness, boundaries, feasibility, overengineering, risk, and verification. Review only; do not implement the solution.
 ---
 
 # Solution Review
 
 Review the proposed solution, not the implementation.
+
+This Skill is **optional**. Run it only when the user explicitly requests an independent review, or when project policy explicitly requires one. Its existence does not make solution review a mandatory lifecycle gate.
 
 Read:
 
@@ -35,7 +37,9 @@ Load the target project's requirements, contracts, architecture decisions, and r
 
 ## Refactor-plan Additions
 
-Check behavior preservation, characterization coverage, Refactor Unit size, named transformation sequence, rollback/stop conditions, and whether the target fixes root causes rather than only line counts.
+Check behavior preservation, characterization coverage, scope granularity, transformation sequence, rollback/stop conditions, and whether the target fixes root causes rather than only line counts.
+
+Do not require one finding per work item or one execution unit per finding. A scope-level plan with multiple related Work Items is preferred when responsibilities and risks are shared.
 
 ## Findings
 
@@ -47,4 +51,6 @@ Recommended verdicts:
 - **WATCH** — implementable but notable non-blocking risks/tradeoffs remain.
 - **REQUEST_CHANGES** — material correctness/scope/architecture/verification gap should be fixed first.
 
-Persist the review using project conventions or the fallback artifact protocol. Do not modify the reviewed artifact unless the user explicitly asks for followup behavior.
+Persist the review using project conventions or the fallback artifact protocol when the user/project wants review history. Do not modify the reviewed artifact unless the user explicitly asks for followup behavior.
+
+Do not automatically trigger followup or a second review. The user decides what to do with the report.
