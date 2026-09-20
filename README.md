@@ -14,7 +14,12 @@ ying-skills/
 │   ├── generate-skills.mjs
 │   └── migrate-skills.mjs
 └── skills-group/
-    └── code-engineering/
+    ├── code-engineering/
+    │   ├── README.md
+    │   ├── README.zh-CN.md
+    │   ├── references/
+    │   └── skills/
+    └── chatgpt-integration/
         ├── README.md
         ├── README.zh-CN.md
         ├── references/
@@ -38,6 +43,7 @@ Generate a specific group/tool combination:
 ```bash
 pnpm generate -- --group code-engineering --tool codex
 pnpm generate -- --group code-engineering --tool claude --tool gemini
+pnpm generate -- --group chatgpt-integration --tool codex
 ```
 
 Non-interactive migration:
@@ -46,6 +52,12 @@ Non-interactive migration:
 pnpm migrate -- \
   --path ../ying-knowledge \
   --group code-engineering \
+  --tool codex
+
+# Example: install the ChatGPT local/private integration skills
+pnpm migrate -- \
+  --path ../your-project \
+  --group chatgpt-integration \
   --tool codex
 ```
 
@@ -68,7 +80,7 @@ Generated artifacts are written under:
 skills-group/<group>/.generated/
 ```
 
-Each generated Skill is self-contained. Shared group references are bundled into that Skill under `references/_shared/`, while the source repository maintains one copy of the shared engineering guidance.
+Each generated Skill is self-contained. Shared group references are bundled into that Skill under `references/_shared/`, while the source repository maintains one copy of the shared group guidance.
 
 ## Skill Groups
 
@@ -91,3 +103,41 @@ Support capabilities include separate **structured code comments** and **enginee
 An independent optional Review subsystem can be applied to refactoring, features, bug fixes, architecture proposals, and ordinary implementation work.
 
 The default engineering baseline emphasizes Refactoring, Clean Code, module-first and layered architecture, Ports & Adapters, Strategy/Plugin where justified, structured semantic context for humans and AI, anti-overengineering, and evidence-based verification.
+
+
+### [ChatGPT Integration](./skills-group/chatgpt-integration/)
+
+Integration capabilities for connecting ChatGPT with local and private environments.
+
+The initial `local-workspace` Skill connects selected local code and documentation to regular ChatGPT through a read-only filesystem MCP server and OpenAI Secure MCP Tunnel.
+
+Its intended workflow is:
+
+```text
+Local/private project context
+           +
+       Web Search
+           ↓
+regular ChatGPT
+           ↓
+research / architecture / solution design
+```
+
+Generate it:
+
+```bash
+pnpm generate -- \
+  --group chatgpt-integration \
+  --tool codex
+```
+
+Or migrate it into an existing project:
+
+```bash
+pnpm migrate -- \
+  --path ../your-project \
+  --group chatgpt-integration \
+  --tool codex
+```
+
+Then invoke the generated `local-workspace` Skill. It guides setup of a read-only filesystem MCP server, OpenAI Secure MCP Tunnel, ChatGPT connection, and end-to-end read/search verification.
