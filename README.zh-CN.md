@@ -14,7 +14,12 @@ ying-skills/
 │   ├── generate-skills.mjs
 │   └── migrate-skills.mjs
 └── skills-group/
-    └── code-engineering/
+    ├── code-engineering/
+    │   ├── README.md
+    │   ├── README.zh-CN.md
+    │   ├── references/
+    │   └── skills/
+    └── chatgpt-integration/
         ├── README.md
         ├── README.zh-CN.md
         ├── references/
@@ -38,6 +43,7 @@ pnpm migrate
 ```bash
 pnpm generate -- --group code-engineering --tool codex
 pnpm generate -- --group code-engineering --tool claude --tool gemini
+pnpm generate -- --group chatgpt-integration --tool codex
 ```
 
 非交互迁移：
@@ -46,6 +52,12 @@ pnpm generate -- --group code-engineering --tool claude --tool gemini
 pnpm migrate -- \
   --path ../ying-knowledge \
   --group code-engineering \
+  --tool codex
+
+# 示例：安装 ChatGPT 本地 / 私有环境接入 Skills
+pnpm migrate -- \
+  --path ../your-project \
+  --group chatgpt-integration \
   --tool codex
 ```
 
@@ -68,7 +80,7 @@ pnpm migrate -- \
 skills-group/<group>/.generated/
 ```
 
-生成后的每个 Skill 都是自包含的。Group 级共享 references 会被打包进每个 Skill 的 `references/_shared/`；源码仓库仍只维护一份共享工程规范。
+生成后的每个 Skill 都是自包含的。Group 级共享 references 会被打包进每个 Skill 的 `references/_shared/`；源码仓库仍只维护一份该 Group 的共享规范。
 
 ## Skill Groups
 
@@ -91,3 +103,41 @@ skills-group/<group>/.generated/
 同时提供独立、可选的 Review 子系统，可复用于重构、Feature、Bugfix、架构方案和普通代码开发。
 
 默认工程基线强调：Refactoring、Clean Code、Module-first 与分层架构、Ports & Adapters、在真实变化点使用 Strategy / Plugin、面向人和 AI 的结构化语义上下文、Anti-overengineering，以及基于证据的验证。
+
+
+### [ChatGPT Integration](./skills-group/chatgpt-integration/)
+
+面向 ChatGPT 与本地、私有环境连接的集成能力。
+
+当前提供 `local-workspace`：通过只读 Filesystem MCP 与 OpenAI Secure MCP Tunnel，将本地代码和文档接入普通 ChatGPT。
+
+目标工作流：
+
+```text
+本地 / 私有项目上下文
+        +
+    Web Search
+        ↓
+   普通 ChatGPT
+        ↓
+调研 / 架构分析 / 方案设计
+```
+
+生成：
+
+```bash
+pnpm generate -- \
+  --group chatgpt-integration \
+  --tool codex
+```
+
+或迁移到已有项目：
+
+```bash
+pnpm migrate -- \
+  --path ../your-project \
+  --group chatgpt-integration \
+  --tool codex
+```
+
+迁移完成后调用生成的 `local-workspace` Skill。它会指导完成只读 Filesystem MCP、OpenAI Secure MCP Tunnel、ChatGPT 连接，以及最终的读取 / 搜索端到端验证。
