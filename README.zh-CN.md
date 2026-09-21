@@ -109,7 +109,7 @@ skills-group/<group>/.generated/
 
 面向 ChatGPT 与本地、私有环境连接的集成能力。
 
-当前提供 `local-workspace`：通过只读 Filesystem MCP 与 OpenAI Secure MCP Tunnel，将本地代码和文档接入普通 ChatGPT。
+当前提供 `local-workspace`：通过 Filesystem MCP 与 OpenAI Secure MCP Tunnel，将本地代码和文档接入普通 ChatGPT。默认只读，只有用户明确要求时才切换为读写模式。
 
 目标工作流：
 
@@ -140,4 +140,4 @@ pnpm migrate -- \
   --tool codex
 ```
 
-迁移完成后调用生成的 `local-workspace` Skill。它会指导完成只读 Filesystem MCP、OpenAI Secure MCP Tunnel、ChatGPT 连接，以及最终的读取 / 搜索端到端验证。
+迁移完成后调用生成的 `local-workspace` Skill。它会指导完成 Workspace Root 选择、只读 / 读写模式选择、Filesystem MCP、OpenAI Secure MCP Tunnel、ChatGPT 连接和端到端验证。默认保持只读；开启写权限时不能扩大已授权目录范围。
