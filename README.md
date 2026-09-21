@@ -109,7 +109,7 @@ The default engineering baseline emphasizes Refactoring, Clean Code, module-firs
 
 Integration capabilities for connecting ChatGPT with local and private environments.
 
-The initial `local-workspace` Skill connects selected local code and documentation to regular ChatGPT through a read-only filesystem MCP server and OpenAI Secure MCP Tunnel.
+The initial `local-workspace` Skill connects selected local code and documentation to regular ChatGPT through a filesystem MCP server and OpenAI Secure MCP Tunnel. It defaults to read-only access and can switch to read-write only after an explicit user request.
 
 Its intended workflow is:
 
@@ -140,4 +140,4 @@ pnpm migrate -- \
   --tool codex
 ```
 
-Then invoke the generated `local-workspace` Skill. It guides setup of a read-only filesystem MCP server, OpenAI Secure MCP Tunnel, ChatGPT connection, and end-to-end read/search verification.
+Then invoke the generated `local-workspace` Skill. It guides workspace-root selection, read-only/read-write mode selection, filesystem MCP setup, OpenAI Secure MCP Tunnel, ChatGPT connection, and end-to-end verification. Read-only is the default; enabling writes must not broaden the authorized workspace roots.
