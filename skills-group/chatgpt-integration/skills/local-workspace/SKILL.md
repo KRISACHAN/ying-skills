@@ -1,11 +1,11 @@
 ---
 name: local-workspace
-description: Connect local macOS code and documentation to regular ChatGPT conversations through a read-only filesystem MCP server and OpenAI Secure MCP Tunnel. Use when the user wants ChatGPT Web Search and private local project context together for research, architecture analysis, or solution design without using Codex/Work for the analysis step.
+description: Connect local macOS code and documentation to regular ChatGPT conversations through a filesystem MCP server and OpenAI Secure MCP Tunnel. Default to read-only access for research and solution design; switch to read-write only when the user explicitly requests it and the current ChatGPT/App supports mutating MCP actions.
 ---
 
 # Local Workspace
 
-Connect selected local project directories to regular ChatGPT conversations through a read-only MCP server and OpenAI Secure MCP Tunnel.
+Connect selected local project directories to regular ChatGPT conversations through a filesystem MCP server and OpenAI Secure MCP Tunnel.
 
 Read first:
 
@@ -16,7 +16,9 @@ Target workflow:
 ```text
 Local Git repository / docs
         ↓
-read-only filesystem MCP
+filesystem MCP
+(read-only by default,
+ optional read-write)
         ↓
 OpenAI Secure MCP Tunnel
         ↓
@@ -24,10 +26,10 @@ regular ChatGPT conversation
       ↙             ↘
 local context     Web Search
       ↘             ↙
-     solution design
+ research / design / optional edits
 ```
 
-This Skill configures access only. Do not modify the target project's source code.
+This Skill configures workspace access. Default to read-only. Never enable write access unless the user explicitly asks for it.
 
 ## Goals
 
@@ -38,17 +40,71 @@ The resulting environment should allow ChatGPT to:
 - combine local context with Web Search;
 - perform technical research and architecture analysis;
 - design implementation or migration solutions;
-- use regular ChatGPT conversations for analysis instead of requiring Codex/Work.
+- optionally modify files inside explicitly authorized roots when write mode is explicitly enabled and supported by the current client.
 
-Local workspace access must remain read-only.
+## Access Modes
+
+### Read-only — default
+
+Use read-only for research, analysis, review, architecture work, and solution design.
+
+Start `filesystem-mcp` with:
+
+```text
+--read-only
+```
+
+Expected capabilities include:
+
+```text
+list_roots
+list
+find_files
+stat
+search_text
+diff
+read
+```
+
+Mutating tools must not be exposed in this mode:
+
+```text
+create
+edit
+move
+delete
+patch
+replace_text
+```
+
+### Read-write — explicit opt-in
+
+Enable write access only when the user explicitly asks ChatGPT to modify local files.
+
+For read-write mode, remove `--read-only` from the filesystem MCP command.
+
+Expected additional tools can include:
+
+```text
+create
+edit
+move
+delete
+patch
+replace_text
+```
+
+Enabling write access must **not** broaden the workspace roots.
+
+If the current ChatGPT/App does not support or permit mutating MCP actions, report that limitation and keep the connection read-only. Do not claim write access is working unless the write tools are actually discoverable.
 
 ## Preferred Components
 
 Use:
 
 - `@j0hanz/filesystem-mcp` as the local filesystem MCP server;
-- `--read-only` to remove mutating MCP tools;
-- explicitly selected workspace roots;
+- `--read-only` by default;
+- explicit allowed workspace roots;
 - OpenAI `tunnel-client` for Secure MCP Tunnel;
 - Homebrew for `tunnel-client` installation on macOS.
 
@@ -60,16 +116,19 @@ Do not introduce GitLab API integration when the required repository is already 
 
 Always preserve these constraints:
 
-1. Local workspace access is read-only.
-2. Never expose the entire home directory.
-3. Only expose explicitly selected project/document directories.
-4. Never expose `/`, `/Users`, `$HOME`, or another broad parent directory as a workspace root.
-5. Never commit API keys, tunnel credentials, `.env` files, private keys, or generated secret configuration.
-6. Never print secret values back to the user.
-7. Preserve the filesystem MCP built-in sensitive-file denylist.
-8. Do not use `--allow-sensitive` unless the user explicitly requests it and understands the implications.
-9. Prefer additional deny rules for repository-specific secrets.
-10. Do not modify project source files as part of this Skill.
+1. Default to read-only access.
+2. Enable read-write only after an explicit user request.
+3. Never silently broaden workspace roots when enabling write access.
+4. Never expose the entire home directory.
+5. Only expose explicitly selected project/document directories.
+6. Never expose `/`, `/Users`, `$HOME`, or another broad parent directory as a workspace root.
+7. Never commit API keys, tunnel credentials, `.env` files, private keys, or generated secret configuration.
+8. Never print secret values back to the user.
+9. Preserve the filesystem MCP built-in sensitive-file denylist.
+10. Do not use `--allow-sensitive` unless the user explicitly requests it and understands the implications.
+11. Prefer additional deny rules for repository-specific secrets.
+12. When write mode is enabled, do not auto-approve destructive or broad operations such as recursive delete, move, or bulk replacement. Require user confirmation when the client supports action approvals.
+13. Do not treat access mode as permission to modify unrelated files. Write only what the user requested inside authorized roots.
 
 ## Workflow
 
@@ -92,22 +151,40 @@ Reuse valid existing installations. Do not reinstall tools unnecessarily.
 
 Do not assume a fixed Homebrew path; resolve it with `brew --prefix`.
 
-### 2. Establish Workspace Root
+### 2. Establish Workspace Roots
 
-Obtain the exact project directory from the user or current workspace context.
+Obtain the exact project/document directories from the user or current workspace context.
 
-Resolve and validate it:
+Resolve and validate every root:
 
 ```bash
 PROJECT_DIR="$(cd "/path/to/project" && pwd)"
 test -d "$PROJECT_DIR"
 ```
 
-For multiple repositories or document directories, configure every allowed root explicitly.
+For multiple repositories or documentation directories, configure every allowed root explicitly.
 
 Never silently broaden access to a parent directory.
 
-### 3. Ensure Node.js Compatibility
+### 3. Determine Access Mode
+
+Default:
+
+```text
+read-only
+```
+
+Switch to:
+
+```text
+read-write
+```
+
+only if the user explicitly asks to allow ChatGPT to create or modify files.
+
+If the request is ambiguous, remain read-only.
+
+### 4. Ensure Node.js Compatibility
 
 Check:
 
@@ -132,7 +209,7 @@ NPX="$NODE_PREFIX/bin/npx"
 
 Do not replace the user's default Node.js installation unless necessary.
 
-### 4. Validate Filesystem MCP
+### 5. Validate Filesystem MCP
 
 Confirm the package can run:
 
@@ -140,7 +217,7 @@ Confirm the package can run:
 "$NPX" -y @j0hanz/filesystem-mcp@latest --help
 ```
 
-Run it with read-only access:
+Read-only:
 
 ```bash
 "$NPX" -y @j0hanz/filesystem-mcp@latest \
@@ -148,7 +225,14 @@ Run it with read-only access:
   "$PROJECT_DIR"
 ```
 
-For repositories needing additional protection:
+Read-write:
+
+```bash
+"$NPX" -y @j0hanz/filesystem-mcp@latest \
+  "$PROJECT_DIR"
+```
+
+For repositories needing additional protection, keep explicit deny patterns in either mode:
 
 ```text
 --deny "**/.env*"
@@ -156,32 +240,11 @@ For repositories needing additional protection:
 --deny "**/*.key"
 ```
 
-Expected read-only capabilities include:
+In read-only mode, seeing a mutating tool is a configuration failure.
 
-```text
-list_roots
-list
-find_files
-stat
-search_text
-diff
-read
-```
+In read-write mode, missing mutating tools means write access is not yet available; check the MCP command and the current ChatGPT/App capability before proceeding.
 
-Mutating tools must not be exposed:
-
-```text
-create
-edit
-move
-delete
-patch
-replace_text
-```
-
-If they appear, stop and correct the MCP configuration.
-
-### 5. Install Secure MCP Tunnel
+### 6. Install Secure MCP Tunnel
 
 On macOS:
 
@@ -194,7 +257,7 @@ tunnel-client help quickstart
 
 Do not bypass macOS Gatekeeper with `xattr`, `spctl`, or similar workarounds when the supported Homebrew installation is available.
 
-### 6. Obtain Tunnel Credentials
+### 7. Obtain Tunnel Credentials
 
 Create/select a tunnel:
 
@@ -223,18 +286,30 @@ Do not save the Runtime API Key inside the target repository.
 
 If these values are unavailable, stop automatic setup here and tell the user exactly what needs to be created.
 
-### 7. Create the Tunnel Profile
+### 8. Create or Update the Tunnel Profile
 
 Resolve absolute paths:
 
 ```bash
 PROJECT_DIR="$(cd "/path/to/project" && pwd)"
 NPX="$(brew --prefix node@24)/bin/npx"
+```
 
+For read-only:
+
+```bash
 MCP_COMMAND="$NPX -y @j0hanz/filesystem-mcp@latest --read-only $PROJECT_DIR"
 ```
 
-Initialize:
+For read-write:
+
+```bash
+MCP_COMMAND="$NPX -y @j0hanz/filesystem-mcp@latest $PROJECT_DIR"
+```
+
+For multiple roots, append each absolute root explicitly to the MCP command.
+
+For a new profile:
 
 ```bash
 tunnel-client init \
@@ -244,9 +319,15 @@ tunnel-client init \
   --mcp-command "$MCP_COMMAND"
 ```
 
-If the profile already exists, inspect and reuse it rather than blindly overwriting it.
+If `local-workspace` already exists, inspect/edit the existing profile instead of blindly replacing it:
 
-### 8. Validate
+```bash
+tunnel-client profiles edit local-workspace
+```
+
+Use the same approach when adding another workspace root or switching between read-only and read-write modes.
+
+### 9. Validate
 
 Run:
 
@@ -258,7 +339,7 @@ tunnel-client doctor \
 
 Do not report success while diagnostics fail.
 
-### 9. Start
+### 10. Start
 
 For interactive local use:
 
@@ -271,22 +352,26 @@ Keep the process running while ChatGPT uses the connection.
 
 For stdio MCP deployments, only one active `tunnel-client` process may use a tunnel ID.
 
-### 10. Connect Regular ChatGPT
+### 11. Connect Regular ChatGPT
 
 After the tunnel is healthy:
 
 1. Open ChatGPT Settings.
 2. Enable Developer Mode where required.
-3. Create an MCP/App connection.
+3. Create or refresh the MCP/App connection.
 4. Select the Secure MCP Tunnel.
-5. Allow ChatGPT to discover the tools.
-6. Confirm only read-only filesystem tools are available.
+5. Scan/refresh the exposed tools.
+6. Verify the tool surface matches the selected access mode.
 
-Do not switch to Codex or Work solely for research or solution design when the goal is to use regular ChatGPT conversations.
+For read-only mode, mutating tools must be absent.
 
-### 11. Verify End-to-End
+For read-write mode, mutating tools must actually be discoverable before reporting write access as enabled.
 
-Test reading:
+When write tools appear, keep destructive/broad actions behind explicit approval where the ChatGPT/App action policy supports it.
+
+### 12. Verify End-to-End
+
+Always verify reading first:
 
 ```text
 Use the local workspace connection.
@@ -297,7 +382,7 @@ project this is.
 Do not modify any files.
 ```
 
-Then test search:
+Then verify search:
 
 ```text
 Search the local workspace for authentication-related code and summarize
@@ -306,11 +391,11 @@ the relevant modules.
 Do not modify any files.
 ```
 
-Setup is complete only after ChatGPT can successfully perform both.
+For read-write mode, do not modify existing project files merely to test the connection. Confirm that write tools are discoverable. If the user explicitly wants an end-to-end write test, use a user-approved temporary/scratch file inside an authorized root.
 
 ## Recommended Usage
 
-Example:
+Read-only research:
 
 ```text
 Read the authentication implementation and project documentation from the
@@ -325,16 +410,26 @@ a migration plan.
 Do not modify code.
 ```
 
-Recommended responsibility split:
+Explicit write task:
+
+```text
+Use local-workspace in write mode.
+
+Update only docs/auth-migration.md according to the agreed migration plan.
+Do not modify source code or any other file.
+```
+
+Recommended responsibility split remains:
 
 ```text
 ChatGPT
   → Web research
   → local code/document analysis
   → architecture and solution design
+  → optional targeted file edits when write mode is explicitly enabled
 
 Codex
-  → implementation
+  → implementation-heavy coding
   → tests
   → command execution
   → refactoring
@@ -347,7 +442,7 @@ Git / private GitLab
 
 ## Optional Hardening
 
-For defense in depth, run filesystem MCP in Docker and mount the project read-only:
+For read-only defense in depth:
 
 ```bash
 docker run -i --rm \
@@ -357,9 +452,7 @@ docker run -i --rm \
   /workspace
 ```
 
-This combines OS-level read-only access with a read-only MCP tool surface.
-
-Do not require Docker for the initial setup unless stronger isolation is desired.
+For read-write mode, the filesystem/container mount must also permit writes. Keep the mount restricted to the same explicit workspace root; do not widen it merely to make write mode work.
 
 ## Troubleshooting
 
@@ -392,7 +485,15 @@ If ChatGPT cannot discover tools, confirm the daemon is running:
 tunnel-client run --profile local-workspace
 ```
 
-If write tools are visible, treat it as a configuration failure and verify the MCP command includes `--read-only`.
+If write tools are visible in read-only mode, ensure the MCP command contains `--read-only`.
+
+If write tools are missing in read-write mode:
+
+1. confirm `--read-only` has been removed;
+2. confirm any Docker/filesystem mount is writable;
+3. restart `tunnel-client`;
+4. refresh/rescan tools in ChatGPT;
+5. confirm the current ChatGPT/App supports mutating MCP actions.
 
 ## Completion Report
 
@@ -400,10 +501,11 @@ At completion report:
 
 - workspace root(s) exposed;
 - filesystem MCP implementation;
-- read-only status;
+- access mode: read-only or read-write;
 - tunnel profile name;
 - `tunnel-client doctor` result;
+- discovered tool surface matches the selected mode;
 - ChatGPT read/search verification result;
-- remaining manual steps.
+- any remaining manual steps.
 
 Never include API keys or other secret values.
