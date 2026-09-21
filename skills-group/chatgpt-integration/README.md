@@ -25,7 +25,7 @@ It is intentionally separate from `code-engineering`:
 
 | Skill | Purpose |
 | --- | --- |
-| `local-workspace` | Connect selected local code and documentation to regular ChatGPT through a read-only filesystem MCP server and OpenAI Secure MCP Tunnel |
+| `local-workspace` | Connect selected local code and documentation to regular ChatGPT through filesystem MCP + OpenAI Secure MCP Tunnel; read-only by default, optional explicit read-write |
 
 Future Skills can cover private GitLab, internal documentation, internal APIs, databases, or remote workspaces without mixing those concerns into the engineering workflow.
 
@@ -36,7 +36,9 @@ Target architecture:
 ```text
 Local code / documentation
           ↓
-read-only filesystem MCP
+filesystem MCP
+read-only by default
+optional read-write
           ↓
 Secure MCP Tunnel
           ↓
@@ -44,7 +46,7 @@ regular ChatGPT
      ↙           ↘
 local context   Web Search
      ↘           ↙
-      solution design
+research / design / optional edits
 ```
 
 Typical use cases:
@@ -52,8 +54,34 @@ Typical use cases:
 - inspect code cloned from an internal-only GitLab;
 - combine private project context with current public technical research;
 - use regular ChatGPT for research, architecture analysis, and solution design;
-- keep Codex focused on implementation, testing, command execution, and refactoring;
+- explicitly allow limited file edits inside authorized roots when needed;
 - avoid exposing the development machine or private Git service through a public inbound endpoint.
+
+## Access Modes
+
+### Default: read-only
+
+Unless the user explicitly asks for writes, `local-workspace` starts `filesystem-mcp` with:
+
+```text
+--read-only
+```
+
+Only read/search/list/diff-style capabilities should be exposed.
+
+### Optional: read-write
+
+Only after an explicit user request, remove:
+
+```text
+--read-only
+```
+
+Write mode must not broaden the workspace roots.
+
+Do not auto-approve destructive or broad actions such as delete, move, or bulk replace.
+
+If the current ChatGPT/App does not support mutating MCP actions, remain read-only and report the limitation instead of claiming write access is active.
 
 ## Usage
 
@@ -63,7 +91,7 @@ Install dependencies:
 pnpm install
 ```
 
-Generate this group for one supported AI tool:
+Generate this group:
 
 ```bash
 pnpm generate -- \
@@ -80,38 +108,59 @@ pnpm migrate -- \
   --tool codex
 ```
 
-After migration, invoke the `local-workspace` Skill and provide the local project directory you want ChatGPT to read.
+After migration, invoke `local-workspace` and provide the local directories ChatGPT should access.
 
-The Skill will guide the environment through:
+Default read-only:
+
+```text
+Use local-workspace to connect this project to ChatGPT.
+Keep it read-only and do not allow file modifications.
+```
+
+Explicit read-write:
+
+```text
+Use local-workspace to connect this project to ChatGPT.
+Enable read-write for this directory, but do not broaden the workspace root.
+```
+
+The Skill guides:
 
 ```text
 filesystem MCP
-  → read-only workspace roots
+  → workspace roots
+  → read-only / read-write selection
   → tunnel-client
   → Secure MCP Tunnel
   → ChatGPT connection
   → end-to-end read/search verification
+  → optional write-tool verification
 ```
 
-After setup, a typical ChatGPT request is:
+For an existing `local-workspace` profile, adding roots or changing access mode should normally edit the existing profile instead of recreating the tunnel:
 
-```text
-Read the authentication implementation and project documentation from the
-local workspace.
-
-Then use Web Search to research the current official OAuth/OIDC guidance.
-
-Compare it with the existing implementation and design a migration plan.
-
-Do not modify code.
+```bash
+tunnel-client profiles edit local-workspace
 ```
+
+Then rerun:
+
+```bash
+tunnel-client doctor --profile local-workspace --explain
+tunnel-client run --profile local-workspace
+```
+
+and refresh/rescan tools in ChatGPT.
 
 ## Security Baseline
 
 - read-only by default;
+- write access requires explicit user opt-in;
+- enabling write must not broaden workspace roots;
 - expose only explicit workspace roots;
 - never expose the entire home directory;
 - do not expose the local MCP server directly to the public internet;
 - never commit Runtime API Keys;
 - preserve protections around `.env`, private keys, certificates, and other secrets;
+- do not auto-approve destructive/broad write actions;
 - prefer OpenAI Secure MCP Tunnel for local/private connectivity.
