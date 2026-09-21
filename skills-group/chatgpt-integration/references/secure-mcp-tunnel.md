@@ -41,21 +41,38 @@ Never default to broad roots such as:
 $HOME
 ```
 
+Changing from read-only to read-write must never expand the allowed roots.
+
 ### Read-only by Default
 
-For research, analysis, architecture work, and solution design, prefer read-only MCP capabilities.
+For research, analysis, architecture work, review, and solution design, prefer read-only MCP capabilities.
 
-Mutation should be introduced only when the workflow genuinely requires it.
+Mutation should be introduced only when the workflow genuinely requires it and the user explicitly requests it.
+
+### Explicit Read-write Opt-in
+
+When read-write access is enabled:
+
+- keep the same explicit workspace roots;
+- keep sensitive-file deny rules in place;
+- expose only the mutating tools required by the selected MCP server;
+- do not auto-approve destructive or broad operations such as recursive delete, move, or bulk replacement;
+- use the client/App approval policy for risky actions when available;
+- if the current client does not support mutating MCP actions, fail closed and remain read-only.
+
+Access mode is not authorization to modify unrelated files.
 
 ### Defense in Depth
 
-When practical, combine:
+For read-only mode, when practical combine:
 
 ```text
 read-only MCP tool surface
 +
 read-only filesystem/container permissions
 ```
+
+For read-write mode, filesystem/container permissions must permit writes, but the mount/root should remain narrowly scoped.
 
 ### Secrets
 
@@ -86,6 +103,12 @@ Stop the existing process before replacing it.
 
 Use separate tunnels when independent services need independent lifecycle or security boundaries.
 
+Adding workspace roots or switching access modes should normally update the existing profile rather than create another tunnel:
+
+```bash
+tunnel-client profiles edit <profile>
+```
+
 ## Validation
 
 Before reporting the connection as ready:
@@ -97,6 +120,8 @@ tunnel-client doctor \
 ```
 
 Then verify an actual harmless MCP read/search operation from ChatGPT.
+
+For read-write mode, confirm mutating tools are actually discoverable before claiming write access is enabled. Do not modify existing project files just to test the connection.
 
 Configuration success is not equivalent to end-to-end success.
 
